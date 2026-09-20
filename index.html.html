@@ -39,7 +39,7 @@ pre{white-space:pre-wrap;margin:8px 0 0;font:12px ui-monospace,monospace;color:v
   <label>Steps</label><div class="hint">One step per line (numbered or not), or separate steps with →. Only the title is generated; the body keeps your steps as written.</div><textarea id="steps" placeholder="1. Install and open through meta link&#10;2. Complete intro screen&#10;3. Tap on the continue button&#10;4. The trust screen showing."></textarea>
   <div class="acts"><button class="b" id="go">Generate issue</button><span class="badge n" id="how"></span></div></div>
  <div id="out" class="card hide"><div class="hi"><label>Title</label><button class="g" id="cT">Copy</button></div><input id="oT"><div class="hi"><label>Issue body</label><button class="g" id="cB">Copy</button></div><textarea id="oB" style="min-height:300px"></textarea>
-  <div class="acts"><button class="b" id="sv">Save to history</button></div></div>
+  <div class="acts"><button class="b" id="sv">Save to history</button><button class="g" id="cW">Copy whole bug</button></div></div>
 </section>
 <section id="his" class="hide">
  <div id="list"></div>
@@ -136,8 +136,11 @@ async function aiAnthropic(steps){const key=C.keys.anthropic,model=C.models.anth
  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:300,system:SYS,messages:[{role:'user',content:c}]})});
  if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse(d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim()).title}
 async function aiOpenAI(steps){const key=C.keys.openai,model=C.models.openai||DEFMODEL.openai;
- const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:SYS},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
- if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim()).title}
+ // OpenAI blocks direct browser calls (no CORS headers), so this goes through
+ // the /api/openai serverless function instead of api.openai.com directly.
+ const r=await fetch('/api/openai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key,model,sys:SYS,content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`})});
+ const d=await r.json();if(!r.ok)throw new Error(d?.error?.message||d?.error||r.status);
+ return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim()).title}
 async function aiGemini(steps){const key=C.keys.gemini,model=C.models.gemini||DEFMODEL.gemini;
  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:SYS}]},contents:[{role:'user',parts:[{text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]}],generationConfig:{responseMimeType:'application/json'}})});
  if(!r.ok)throw new Error(r.status);const d=await r.json();const t=(d.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('');return JSON.parse(t.replace(/```json|```/g,'').trim()).title}
@@ -151,11 +154,12 @@ let CUR=null;
 $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps').value.trim();
  if(!txt)return toast('Add some steps');
  const st=parse(txt);let d;$('#go').disabled=true;
- try{d=(C.keys[C.provider]||'').trim()?await ai(txt):offline(st)}catch(e){toast('API failed, used offline title');d=offline(st)}
+ try{d=(C.keys[C.provider]||'').trim()?await ai(txt):offline(st)}catch(e){toast('AI failed ('+(e?.message||e)+'), used offline title');d=offline(st)}
  $('#go').disabled=false;const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}`;
  const body=`${bold(HEAD)}\n${st.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n${QAL.map(bold).join('\n')}`;
  CUR={module:C.module,round:C.round};$('#oT').value=title;$('#oB').value=body;$('#out').classList.remove('hide')};
 $('#cT').onclick=()=>copy($('#oT').value);$('#cB').onclick=()=>copy($('#oB').value);
+$('#cW').onclick=()=>copy(`${$('#oT').value}\n\n${$('#oB').value}`);
 $('#sv').onclick=()=>{S.items.unshift({id:Date.now(),date:new Date().toISOString(),module:CUR.module,round:CUR.round,status:'Open',title:$('#oT').value,body:$('#oB').value});addMod(CUR.module);save();toast('Saved to history')};
 // history: module headings with their issue lists
 function renderList(){const mods=[...new Set([...S.modules,...S.items.map(i=>i.module)])].sort();
