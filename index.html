@@ -49,14 +49,19 @@ button.b:disabled{opacity:.7;cursor:wait}
 .vt{display:flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;margin-left:auto}
 .vt button{background:none;border:0;color:var(--mu);padding:8px 11px;cursor:pointer;font:inherit;line-height:1}
 .vt button.on{background:var(--ac);color:var(--on)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;align-items:start}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;align-items:stretch}
 .grid.list{grid-template-columns:1fr;gap:8px}
 .ic{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px}
 .ic .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .ic .pt{font-weight:600;font-size:15px}
 .ic .sum{font-size:14px;line-height:1.45}
 .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.chip{font-size:11.5px;font-weight:500;padding:2px 9px;border-radius:999px;border:1px solid var(--bd);background:var(--bg);color:var(--mu);white-space:nowrap}
+.chip{font-size:11.5px;font-weight:500;padding:2px 9px;border-radius:999px;border:1px solid var(--bd);background:var(--bg);color:var(--mu);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chip.mod{flex:0 1 auto;min-width:0}
+.ic .pt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ic .top .st{flex:none}
+.ic .sum{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.grid.list .ic .sum{-webkit-line-clamp:2}
 .chip.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px}
 .chip.ac{color:var(--ac);border-color:color-mix(in srgb,var(--ac) 32%,transparent);background:color-mix(in srgb,var(--ac) 12%,transparent)}
 .st{font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
@@ -228,9 +233,12 @@ $('#clrAll').onclick=()=>{$('#steps').value='';$('#steps').focus();toast('Steps 
 // ---------- dashboard ----------
 const DF={q:'',app:'',build:''};
 const rel=d=>{const s=(Date.now()-new Date(d))/1e3;if(!isFinite(s))return'';if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';const n=Math.floor(s/86400);return n<30?n+'d ago':new Date(d).toLocaleDateString()};
+const short=(s,n=38)=>{s=String(s||'');return s.length>n?s.slice(0,n-1).replace(/[\s+\-–,]+$/,'')+'…':s};
 // stored titles look like: App (V 203.0.203) (Module) (R-2) : summary
 function pit(i){const t=i.title||'',v=t.match(/\(V\s*([^)]+)\)/i),ix=t.indexOf(' : ');
- return{id:i.id,date:i.date,title:t,body:i.body||'',app:i.app||'(No app set)',module:i.module||'No module',round:i.round||'',version:v?v[1].trim():'',status:i.status==='Resolved'?'Resolved':'Open',summary:(ix>=0?t.slice(ix+3):t).trim()}}
+ // older items were saved without an app field: recover it from the title prefix
+ const head=(ix>=0?t.slice(0,ix):t),app=(i.app||'').trim()||head.split(/\s*\(/)[0].trim()||'Unassigned';
+ return{id:i.id,date:i.date,title:t,body:i.body||'',app,module:(i.module||'').trim()||'No module',round:i.round||'',version:v?v[1].trim():'',status:i.status==='Resolved'?'Resolved':'Open',summary:(ix>=0?t.slice(ix+3):t).trim()}}
 const ALL=()=>[...S.items].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(pit);
 const opts=(cur,none,list)=>`<option value="">${none}</option>`+list.map(v=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(v)}</option>`).join('');
 function renderDash(){const all=ALL();
@@ -251,10 +259,10 @@ function renderCards(all){all=all||ALL();
  const f=all.filter(i=>(!DF.app||i.app===DF.app)&&(!DF.build||i.version===DF.build)
   &&(!q||[i.summary,i.module,i.version,i.round,i.app,i.body].join(' ').toLowerCase().includes(q)));
  $('#dashList').innerHTML=f.length?f.map(i=>`<article class="ic" data-id="${i.id}">
-  <div class="top"><span class="pt">${esc(i.app)}</span><span class="st ${i.status==='Resolved'?'res':'open'}">${i.status}</span></div>
-  <div class="chips"><span class="chip">${esc(i.module)}</span>${i.version?`<span class="chip mono">v${esc(i.version)}</span>`:''}${i.round?`<span class="chip ac">${esc(i.round)}</span>`:''}<span class="chip">${rel(i.date)}</span></div>
-  <div class="sum">${esc(i.summary)}</div>
-  <div class="qa"><button class="g" data-d="jira" data-id="${i.id}">Copy Jira</button><button class="g" data-d="md" data-id="${i.id}">Copy Markdown</button><button class="g" data-d="view" data-id="${i.id}">Open</button><button class="g" data-d="tog" data-id="${i.id}">${i.status==='Resolved'?'Reopen':'Mark resolved'}</button></div>
+  <div class="top"><span class="pt" title="${esc(i.app)}">${esc(i.app)}</span><span class="st ${i.status==='Resolved'?'res':'open'}">${i.status}</span></div>
+  <div class="chips"><span class="chip mod" title="${esc(i.module)}">${esc(short(i.module))}</span>${i.version?`<span class="chip mono">v${esc(i.version)}</span>`:''}${i.round?`<span class="chip ac">${esc(i.round)}</span>`:''}<span class="chip">${rel(i.date)}</span></div>
+  <div class="sum" title="${esc(i.summary)}">${esc(i.summary)}</div>
+  <div class="qa"><button class="g" data-d="jira" data-id="${i.id}">Copy Jira</button><button class="g" data-d="md" data-id="${i.id}">Copy MD</button><button class="g" data-d="view" data-id="${i.id}">Open</button><button class="g" data-d="tog" data-id="${i.id}">${i.status==='Resolved'?'Reopen':'Resolve'}</button></div>
  </article>`).join('')
  :(all.length?`<div class="empty"><div style="font-size:30px">🔍</div><h3>No issues match these filters</h3><p>Try a different build or project, or clear the search.</p><button class="g" data-d="clr">Clear filters</button></div>`
   :`<div class="empty"><div style="font-size:34px">🐞</div><h3>No issues yet</h3><p>Write your repro steps and Bug Writer turns them into a titled, formatted issue. Every one you generate lands here.</p><button class="b" data-d="go">Generate your first issue</button></div>`)}
