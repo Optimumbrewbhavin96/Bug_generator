@@ -1,11 +1,13 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bug Writer</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f4f4f5;--card:#fff;--tx:#18181b;--mu:#71717a;--bd:#e4e4e7;--ac:#0d9488;--on:#fff}
-[data-theme=dark]{--bg:#0c0c0e;--card:#17171a;--tx:#f4f4f5;--mu:#a1a1aa;--bd:#2b2b31;--ac:#2dd4bf;--on:#0b0b0d}
+[data-theme=dark]{--bg:#0f1115;--card:#1a1d24;--tx:#eceef2;--mu:#8e96a6;--bd:#2b303c;--ac:#2dd4bf;--on:#0b0b0d}
 *{box-sizing:border-box}body{margin:0;font:14px Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--tx)}
-header{display:flex;gap:16px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--bd);background:var(--card);flex-wrap:wrap}
+header{display:flex;gap:16px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--bd);background:var(--card);flex-wrap:wrap;position:sticky;top:0;z-index:6}
+header .sp{flex:1}
 h1{font-size:17px;margin:0}h3{margin:0 0 6px}nav button{background:none;border:0;color:var(--mu);padding:8px 12px;cursor:pointer;font:inherit;border-bottom:2px solid transparent}
-nav button.on{color:var(--ac);border-color:var(--ac)}main{max-width:900px;margin:18px auto;padding:0 14px}
+nav button.on{color:var(--ac);border-color:var(--ac)}main{max-width:1180px;margin:18px auto;padding:0 14px}
+#gen,#his,#set{max-width:900px;margin:0 auto}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 4px 12px rgba(16,24,40,.05)}
 [data-theme=dark] .card{box-shadow:0 1px 2px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.3)}
 label{display:block;font-size:13px;font-weight:500;color:var(--mu);margin:10px 0 4px}
@@ -30,20 +32,73 @@ pre{white-space:pre-wrap;margin:8px 0 0;font:12px ui-monospace,monospace;color:v
 #swb .sq{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}#swb .sq.on{border-color:var(--tx)}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 16px;border-radius:8px;opacity:0;transition:.2s;pointer-events:none;z-index:10}
 #toast.on{opacity:1}#pv{max-width:200px;border-radius:6px;margin-top:8px}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;margin-right:7px;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+button.b:disabled{opacity:.7;cursor:wait}
+/* ---------- dashboard ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+.stat .k{font-size:12px;color:var(--mu)}
+.stat .v{font-size:26px;font-weight:600;line-height:1.2;margin-top:2px;letter-spacing:-.01em}
+.stat .v.sm{font-size:17px;padding-top:7px}
+.bar{position:sticky;top:57px;z-index:5;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;margin-bottom:14px}
+.sr{flex:1 1 230px;position:relative;display:flex;align-items:center}
+.sr input{padding-left:31px}
+.sr .mg{position:absolute;left:10px;opacity:.5;pointer-events:none;font-size:13px}
+.bar select{width:auto;min-width:130px;flex:0 1 auto}
+.vt{display:flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;margin-left:auto}
+.vt button{background:none;border:0;color:var(--mu);padding:8px 11px;cursor:pointer;font:inherit;line-height:1}
+.vt button.on{background:var(--ac);color:var(--on)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;align-items:start}
+.grid.list{grid-template-columns:1fr;gap:8px}
+.ic{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px}
+.ic .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ic .pt{font-weight:600;font-size:15px}
+.ic .sum{font-size:14px;line-height:1.45}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font-size:11.5px;font-weight:500;padding:2px 9px;border-radius:999px;border:1px solid var(--bd);background:var(--bg);color:var(--mu);white-space:nowrap}
+.chip.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px}
+.chip.ac{color:var(--ac);border-color:color-mix(in srgb,var(--ac) 32%,transparent);background:color-mix(in srgb,var(--ac) 12%,transparent)}
+.st{font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.st.open{color:#f97316;background:color-mix(in srgb,#f97316 14%,transparent);border:1px solid color-mix(in srgb,#f97316 38%,transparent)}
+.st.res{color:#16a34a;background:color-mix(in srgb,#16a34a 14%,transparent);border:1px solid color-mix(in srgb,#16a34a 38%,transparent)}
+[data-theme=dark] .st.res{color:#4ade80}
+.qa{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:2px;opacity:0;transition:opacity .15s}
+.ic:hover .qa,.ic:focus-within .qa{opacity:1}
+@media(hover:none){.qa{opacity:1}}
+.qa button{font-size:12px;padding:4px 9px}
+.grid.list .ic{flex-direction:row;align-items:center;padding:10px 12px;flex-wrap:wrap;gap:10px}
+.grid.list .ic .sum{flex:1 1 260px;min-width:0}
+.grid.list .ic .top{order:-1}
+.grid.list .qa{margin:0;padding:0}
+.empty{grid-column:1/-1;text-align:center;padding:48px 18px;border:1px dashed var(--bd);border-radius:12px;background:var(--card)}
+.empty h3{font-size:16px;margin:10px 0 0}
+.empty p{color:var(--mu);margin:6px auto 14px;max-width:44ch}
+@media(max-width:700px){header{position:static}.bar{position:static}}
 </style></head><body>
-<header><h1>🐞 Bug Writer</h1><nav><button data-t="gen" class="on">Generate</button><button data-t="his">History</button><button data-t="set">Settings</button></nav></header>
+<header><h1>🐞 Bug Writer</h1><nav><button data-t="dash" class="on">Dashboard</button><button data-t="gen">Generate</button><button data-t="his">History</button><button data-t="set">Settings</button></nav><span class="sp"></span><button class="b" id="nw">+ New issue</button></header>
 <main>
-<section id="gen">
+<section id="gen" class="hide">
  <div class="card hi"><div id="ctx"></div><button class="g" id="chg">Change</button></div>
  <div class="card">
   <label>Steps</label><div class="hint">One step per line (numbered or not), or separate steps with →. Only the title is generated; the body keeps your steps as written.</div><textarea id="steps" placeholder="1. Install and open through meta link&#10;2. Complete intro screen&#10;3. Tap on the continue button&#10;4. The trust screen showing."></textarea>
-  <div class="acts"><button class="b" id="go">Generate issue</button><span class="badge n" id="how"></span></div></div>
- <div id="out" class="card hide"><div class="hi"><label>Title</label><button class="g" id="cT">Copy</button></div><input id="oT"><div class="hi"><label>Issue body</label><button class="g" id="cB">Copy</button></div><textarea id="oB" style="min-height:300px"></textarea>
-  <div class="acts"><button class="b" id="sv">Save to history</button><button class="g" id="cW">Copy whole bug</button></div></div>
+  <div class="acts"><button class="b" id="go"><span id="goSpin" class="spin hide"></span><span id="goLabel">Generate issue</span></button><span class="badge n" id="how"></span></div></div>
+ <div id="out" class="card hide"><label>Title</label><input id="oT"><label>Issue body</label><textarea id="oB" style="min-height:300px"></textarea>
+  <div class="acts"><button class="g" id="cT">Copy title</button><button class="g" id="cW">Copy bug</button><button class="g" id="clrAll">Clear all</button></div>
+  <div class="mu" id="autoNote" style="margin-top:6px"></div></div>
 </section>
 <section id="his" class="hide">
  <div id="list"></div>
  <div class="acts"><button class="g" id="exp2">Export JSON</button><label class="g" style="margin:0;cursor:pointer">Import<input type="file" id="imp" accept=".json" class="hide"></label></div>
+</section>
+<section id="dash">
+ <div class="stats" id="stats"></div>
+ <div class="bar">
+  <span class="sr"><span class="mg">🔍</span><input id="dq" placeholder="Search issues, modules, builds…" autocomplete="off"></span>
+  <select id="fApp"></select><select id="fBuild"></select>
+  <span class="vt"><button data-d="grid" id="vG" title="Card grid">⊞ Grid</button><button data-d="list" id="vL" title="Compact list">☰ List</button></span>
+ </div>
+ <div id="dashList" class="grid"></div>
 </section>
 <section id="set" class="hide">
  <div class="card"><h3>Appearance</h3><label class="sw"><input type="checkbox" id="dk"> Dark mode</label><label>Accent color</label><div class="acts" id="swb" style="margin:0"></div></div>
@@ -85,7 +140,10 @@ function ctxModal(force){modal('Set active details',`<label>App name *</label><i
  {cancel:!force||!!ctxOK(),onOk(){const a=$('#mA').value.trim(),m=$('#mM').value.trim(),r=$('#mR').value.trim();if(!a||!m||!r){toast('App name, module and round are required');return false}
  Object.assign(C,{app:a,version:$('#mV').value.trim(),module:m,round:r});addMod(m);save();renderCtx();renderSet()}})}
 $('#chg').onclick=()=>ctxModal(false);
-$$('nav button').forEach(b=>b.onclick=()=>{$$('nav button').forEach(x=>x.classList.toggle('on',x===b));['gen','his','set'].forEach(id=>$('#'+id).classList.toggle('hide',id!==b.dataset.t));if(b.dataset.t==='his'){HM=null;renderList()}if(b.dataset.t==='set')renderSet()});
+function goTab(t){$$('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));['gen','his','dash','set'].forEach(id=>$('#'+id).classList.toggle('hide',id!==t));
+ if(t==='his'){HM=null;renderList()}if(t==='dash')renderDash();if(t==='set')renderSet();scrollTo({top:0})}
+$$('nav button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
+$('#nw').onclick=()=>{goTab('gen');if(!ctxOK())return ctxModal(true);$('#steps').focus()};
 // theme
 const ACC=[['Teal','#0d9488','#2dd4bf'],['Blue','#2563eb','#60a5fa'],['Green','#16a34a','#4ade80'],['Orange','#ea580c','#fb923c'],['Rose','#e11d48','#fb7185'],['Indigo','#4f46e5','#818cf8']];
 const theme=()=>{const d=document.documentElement,a=ACC[S.acc||0]||ACC[0];d.dataset.theme=S.dark?'dark':'light';d.style.setProperty('--ac',S.dark?a[2]:a[1])};
@@ -150,17 +208,70 @@ async function aiCustom(steps){const key=C.keys.custom,model=C.models.custom,ep=
  if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim()).title}
 const AI_FN={anthropic:aiAnthropic,openai:aiOpenAI,gemini:aiGemini,custom:aiCustom};
 async function ai(steps){return AI_FN[C.provider](steps)}
-let CUR=null;
 $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps').value.trim();
  if(!txt)return toast('Add some steps');
- const st=parse(txt);let d;$('#go').disabled=true;
- try{d=(C.keys[C.provider]||'').trim()?await ai(txt):offline(st)}catch(e){toast('AI failed ('+(e?.message||e)+'), used offline title');d=offline(st)}
- $('#go').disabled=false;const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}`;
+ const st=parse(txt);let d,aiErr=null;
+ $('#go').disabled=true;$('#goSpin').classList.remove('hide');$('#goLabel').textContent='Generating…';
+ try{d=(C.keys[C.provider]||'').trim()?await ai(txt):offline(st)}catch(e){aiErr=e?.message||String(e);d=offline(st)}
+ $('#go').disabled=false;$('#goSpin').classList.add('hide');$('#goLabel').textContent='Generate issue';
+ const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}`;
  const body=`${bold(HEAD)}\n${st.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n${QAL.map(bold).join('\n')}`;
- CUR={module:C.module,round:C.round};$('#oT').value=title;$('#oB').value=body;$('#out').classList.remove('hide')};
-$('#cT').onclick=()=>copy($('#oT').value);$('#cB').onclick=()=>copy($('#oB').value);
+ $('#oT').value=title;$('#oB').value=body;$('#out').classList.remove('hide');
+ // auto-save to history under the active module
+ S.items.unshift({id:Date.now(),date:new Date().toISOString(),app:C.app,module:C.module,round:C.round,status:'Open',title,body});
+ addMod(C.module);save();
+ $('#autoNote').textContent='✓ Auto-saved to History under '+C.module;
+ toast(aiErr?`AI failed (${aiErr}), used offline title — saved to history`:'Saved to history')};
+$('#cT').onclick=()=>copy($('#oT').value);
 $('#cW').onclick=()=>copy(`${$('#oT').value}\n\n${$('#oB').value}`);
-$('#sv').onclick=()=>{S.items.unshift({id:Date.now(),date:new Date().toISOString(),module:CUR.module,round:CUR.round,status:'Open',title:$('#oT').value,body:$('#oB').value});addMod(CUR.module);save();toast('Saved to history')};
+$('#clrAll').onclick=()=>{$('#steps').value='';$('#steps').focus();toast('Steps cleared')};
+// ---------- dashboard ----------
+const DF={q:'',app:'',build:''};
+const rel=d=>{const s=(Date.now()-new Date(d))/1e3;if(!isFinite(s))return'';if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';const n=Math.floor(s/86400);return n<30?n+'d ago':new Date(d).toLocaleDateString()};
+// stored titles look like: App (V 203.0.203) (Module) (R-2) : summary
+function pit(i){const t=i.title||'',v=t.match(/\(V\s*([^)]+)\)/i),ix=t.indexOf(' : ');
+ return{id:i.id,date:i.date,title:t,body:i.body||'',app:i.app||'(No app set)',module:i.module||'No module',round:i.round||'',version:v?v[1].trim():'',status:i.status==='Resolved'?'Resolved':'Open',summary:(ix>=0?t.slice(ix+3):t).trim()}}
+const ALL=()=>[...S.items].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(pit);
+const opts=(cur,none,list)=>`<option value="">${none}</option>`+list.map(v=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(v)}</option>`).join('');
+function renderDash(){const all=ALL();
+ const projects=[...new Set(all.map(i=>i.app))].sort(),open=all.filter(i=>i.status==='Open').length;
+ // builds are per app: picking a project narrows this list to that app's versions
+ const builds=[...new Set(all.filter(i=>!DF.app||i.app===DF.app).map(i=>i.version).filter(Boolean))].sort((a,b)=>b.localeCompare(a,undefined,{numeric:true}));
+ $('#stats').innerHTML=[['Total issues',all.length],['Projects',projects.length],['Open',open],['Last added',all[0]?rel(all[0].date):'—']]
+  .map(([k,v],n)=>`<div class="stat"><div class="k">${k}</div><div class="v${n===3?' sm':''}">${esc(String(v))}</div></div>`).join('');
+ $('#fApp').innerHTML=opts(DF.app,'All projects',projects);
+ if(DF.build&&!builds.includes(DF.build))DF.build='';
+ $('#fBuild').innerHTML=opts(DF.build,DF.app?'All builds of '+DF.app:'All builds',builds);
+ $('#fBuild').disabled=!builds.length;$('#dq').value=DF.q;
+ const list=S.dashView==='list';$('#dashList').classList.toggle('list',list);
+ $('#vG').classList.toggle('on',!list);$('#vL').classList.toggle('on',list);
+ renderCards(all)}
+function renderCards(all){all=all||ALL();
+ const q=DF.q.trim().toLowerCase();
+ const f=all.filter(i=>(!DF.app||i.app===DF.app)&&(!DF.build||i.version===DF.build)
+  &&(!q||[i.summary,i.module,i.version,i.round,i.app,i.body].join(' ').toLowerCase().includes(q)));
+ $('#dashList').innerHTML=f.length?f.map(i=>`<article class="ic" data-id="${i.id}">
+  <div class="top"><span class="pt">${esc(i.app)}</span><span class="st ${i.status==='Resolved'?'res':'open'}">${i.status}</span></div>
+  <div class="chips"><span class="chip">${esc(i.module)}</span>${i.version?`<span class="chip mono">v${esc(i.version)}</span>`:''}${i.round?`<span class="chip ac">${esc(i.round)}</span>`:''}<span class="chip">${rel(i.date)}</span></div>
+  <div class="sum">${esc(i.summary)}</div>
+  <div class="qa"><button class="g" data-d="jira" data-id="${i.id}">Copy Jira</button><button class="g" data-d="md" data-id="${i.id}">Copy Markdown</button><button class="g" data-d="view" data-id="${i.id}">Open</button><button class="g" data-d="tog" data-id="${i.id}">${i.status==='Resolved'?'Reopen':'Mark resolved'}</button></div>
+ </article>`).join('')
+ :(all.length?`<div class="empty"><div style="font-size:30px">🔍</div><h3>No issues match these filters</h3><p>Try a different build or project, or clear the search.</p><button class="g" data-d="clr">Clear filters</button></div>`
+  :`<div class="empty"><div style="font-size:34px">🐞</div><h3>No issues yet</h3><p>Write your repro steps and Bug Writer turns them into a titled, formatted issue. Every one you generate lands here.</p><button class="b" data-d="go">Generate your first issue</button></div>`)}
+const toJira=s=>String(s||'').replace(/\*\*(.+?)\*\*/g,'*$1*');
+$('#dq').oninput=e=>{DF.q=e.target.value;renderCards()};
+$('#fApp').onchange=e=>{DF.app=e.target.value;DF.build='';renderDash()};
+$('#fBuild').onchange=e=>{DF.build=e.target.value;renderCards()};
+$('#dash').onclick=e=>{const b=e.target.closest('[data-d]');if(!b)return;const a=b.dataset.d;
+ if(a==='go')return $('#nw').click();
+ if(a==='clr'){DF.q=DF.app=DF.build='';return renderDash()}
+ if(a==='grid'||a==='list'){S.dashView=a;save();return renderDash()}
+ const i=S.items.find(x=>x.id==b.dataset.id);if(!i)return;
+ if(a==='md')return copy(`${i.title}\n\n${i.body}`);
+ if(a==='jira')return copy(`${toJira(i.title)}\n\n${toJira(i.body)}`);
+ if(a==='tog'){i.status=i.status==='Resolved'?'Open':'Resolved';save();renderDash();return toast(`Marked ${i.status.toLowerCase()}`)}
+ if(a==='view')modal('Issue',`<label>Title</label><input id="eT" value="${esc(i.title)}"><label>Issue body</label><textarea id="eB" style="min-height:260px">${esc(i.body)}</textarea>`,
+  {ok:'Save changes',onOk(){i.title=$('#eT').value.trim()||i.title;i.body=$('#eB').value;save();renderDash();toast('Saved')}})};
 // history: module headings with their issue lists
 function renderList(){const mods=[...new Set([...S.modules,...S.items.map(i=>i.module)])].sort();
  $('#list').innerHTML=mods.map(m=>{const L=S.items.filter(i=>i.module===m),open=EXP.has(m);
@@ -173,5 +284,5 @@ $('#his').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=
  else if(a==='mdel')delMod(m)};
 $('#exp2').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S.items,null,1)],{type:'application/json'}));a.download='bug-history.json';a.click()};
 $('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const a=JSON.parse(r.result),ids=new Set(S.items.map(x=>x.id));a.filter(x=>!ids.has(x.id)).forEach(x=>{S.items.push(x);addMod(x.module)});save();renderList();toast('Imported')}catch(x){toast('Invalid file')}};r.readAsText(f)};
-theme();renderCtx();renderSet();updHow();if(!ctxOK())ctxModal(true);
+theme();renderCtx();renderSet();updHow();renderDash();if(!ctxOK())ctxModal(true);
 </script></body></html>
