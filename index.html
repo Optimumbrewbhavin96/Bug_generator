@@ -70,7 +70,7 @@ try{const r=JSON.parse(localStorage.getItem(K)||'null');if(r){S=Object.assign(S,
  S.cfg.keys=Object.assign({anthropic:'',openai:'',gemini:'',custom:''},r.cfg.keys);S.cfg.models=Object.assign({...DEFMODEL},r.cfg.models);
  if(r.cfg.key&&!S.cfg.keys.anthropic){S.cfg.keys.anthropic=r.cfg.key} // migrate old single-key field
 }}catch(e){}
-let HM=null;const C=S.cfg,save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Could not save locally')}};
+let HM=null,EXP=new Set();const C=S.cfg,save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Could not save locally')}};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800)}
 async function copy(v){try{await navigator.clipboard.writeText(v)}catch(e){const a=document.createElement('textarea');a.value=v;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('Copied')}
@@ -93,8 +93,8 @@ $('#swb').onclick=e=>{const i=e.target.dataset.ac;if(i==null)return;S.acc=+i;sav
 $('#dk').onchange=e=>{S.dark=e.target.checked;save();theme()};
 // modules
 function renameMod(o,n){n=n.trim();if(!n||n===o)return false;if(S.modules.includes(n)){toast('Module already exists');return false}
- S.modules=S.modules.map(m=>m===o?n:m);S.items.forEach(i=>{if(i.module===o){i.module=n;i.title=i.title.replace(`(${o})`,`(${n})`)}});if(C.module===o)C.module=n;if(HM===o)HM=n;save();renderCtx();return true}
-function delMod(m){const n=S.items.filter(i=>i.module===m).length;ask(`Delete module "${esc(m)}" and its ${n} issue(s)? This cannot be undone.`,()=>{S.modules=S.modules.filter(x=>x!==m);S.items=S.items.filter(i=>i.module!==m);if(C.module===m)C.module='';save();renderCtx();renderSet();renderList()})}
+ S.modules=S.modules.map(m=>m===o?n:m);S.items.forEach(i=>{if(i.module===o){i.module=n;i.title=i.title.replace(`(${o})`,`(${n})`)}});if(C.module===o)C.module=n;if(HM===o)HM=n;if(EXP.has(o)){EXP.delete(o);EXP.add(n)}save();renderCtx();return true}
+function delMod(m){const n=S.items.filter(i=>i.module===m).length;ask(`Delete module "${esc(m)}" and its ${n} issue(s)? This cannot be undone.`,()=>{S.modules=S.modules.filter(x=>x!==m);S.items=S.items.filter(i=>i.module!==m);EXP.delete(m);if(C.module===m)C.module='';save();renderCtx();renderSet();renderList()})}
 $('#bm').onchange=e=>{S.bold=e.target.value;save();toast('Saved')};
 const PLABEL={anthropic:'Anthropic',openai:'OpenAI',gemini:'Gemini',custom:'Custom'};
 function renderSet(){$('#bm').value=S.bold||'md';$('#dk').checked=S.dark;$('#swb').innerHTML=ACC.map((a,i)=>`<button class="sq${i===(S.acc||0)?' on':''}" data-ac="${i}" title="${a[0]}" style="background:${a[1]}"></button>`).join('');$('#sA').value=C.app;$('#sV').value=C.version;$('#sR').value=C.round;
@@ -163,9 +163,11 @@ $('#cW').onclick=()=>copy(`${$('#oT').value}\n\n${$('#oB').value}`);
 $('#sv').onclick=()=>{S.items.unshift({id:Date.now(),date:new Date().toISOString(),module:CUR.module,round:CUR.round,status:'Open',title:$('#oT').value,body:$('#oB').value});addMod(CUR.module);save();toast('Saved to history')};
 // history: module headings with their issue lists
 function renderList(){const mods=[...new Set([...S.modules,...S.items.map(i=>i.module)])].sort();
- $('#list').innerHTML=mods.map(m=>{const L=S.items.filter(i=>i.module===m);return `<div class="card"><div class="hi"><b>${esc(m)} <span class="pill">${L.length}</span></b><span class="acts" style="margin:0"><button class="g" data-a="mren" data-m="${esc(m)}">Edit</button><button class="g" data-a="mdel" data-m="${esc(m)}">Delete</button></span></div>${L.map(i=>`<div class="it hi"><span style="flex:1;min-width:200px">${esc(i.title)}</span><span class="acts" style="margin:0"><button class="g" data-a="ed" data-id="${i.id}">Edit</button><button class="g" data-a="del" data-id="${i.id}">Delete</button></span></div>`).join('')||'<p class="mu" style="margin:8px 0 0">No issues yet.</p>'}</div>`}).join('')||'<p class="mu">No issues yet.</p>'}
+ $('#list').innerHTML=mods.map(m=>{const L=S.items.filter(i=>i.module===m),open=EXP.has(m);
+  return `<div class="card"><div class="hi" data-a="mtog" data-m="${esc(m)}" style="cursor:pointer"><b>${open?'▾':'▸'} ${esc(m)} <span class="pill">${L.length}</span></b><span class="acts" style="margin:0"><button class="g" data-a="mren" data-m="${esc(m)}">Edit</button><button class="g" data-a="mdel" data-m="${esc(m)}">Delete</button></span></div>${open?(L.map(i=>`<div class="it hi"><span style="flex:1;min-width:200px">${esc(i.title)}</span><span class="acts" style="margin:0"><button class="g" data-a="ed" data-id="${i.id}">Edit</button><button class="g" data-a="del" data-id="${i.id}">Delete</button></span></div>`).join('')||'<p class="mu" style="margin:8px 0 0">No issues yet.</p>'):''}</div>`}).join('')||'<p class="mu">No issues yet.</p>'}
 $('#his').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,i=S.items.find(x=>x.id==b.dataset.id),m=b.dataset.m;
- if(a==='del')ask('Delete this issue?',()=>{S.items=S.items.filter(x=>x!==i);save();renderList()});
+ if(a==='mtog'){EXP.has(m)?EXP.delete(m):EXP.add(m);renderList()}
+ else if(a==='del')ask('Delete this issue?',()=>{S.items=S.items.filter(x=>x!==i);save();renderList()});
  else if(a==='ed')modal('Edit issue',`<label>Title</label><input id="eT" value="${esc(i.title)}"><label>Body</label><textarea id="eB" style="min-height:240px">${esc(i.body)}</textarea>`,{onOk(){i.title=$('#eT').value.trim()||i.title;i.body=$('#eB').value;save();renderList()}});
  else if(a==='mren')modal('Edit module name',`<label>Module name</label><input id="eM" value="${esc(m)}">`,{onOk(){if(renameMod(m,$('#eM').value)===false)return false;renderList()}});
  else if(a==='mdel')delMod(m)};
