@@ -1,138 +1,220 @@
- <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bug Writer</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🐞%3C/text%3E%3C/svg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>BugDesk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f4f4f5;--card:#fff;--tx:#18181b;--mu:#71717a;--bd:#e4e4e7;--ac:#0d9488;--on:#fff}
-[data-theme=dark]{--bg:#0f1115;--card:#1a1d24;--tx:#eceef2;--mu:#8e96a6;--bd:#2b303c;--ac:#2dd4bf;--on:#0b0b0d}
-*{box-sizing:border-box}body{margin:0;font:14px Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--tx)}
-header{display:flex;gap:16px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--bd);background:var(--card);flex-wrap:wrap;position:sticky;top:0;z-index:6}
-header .sp{flex:1}
-h1{font-size:17px;margin:0}h3{margin:0 0 6px}nav button{background:none;border:0;color:var(--mu);padding:8px 12px;cursor:pointer;font:inherit;border-bottom:2px solid transparent}
-nav button.on{color:var(--ac);border-color:var(--ac)}main{max-width:1180px;margin:18px auto;padding:0 14px}
-#gen,#his,#set{max-width:900px;margin:0 auto}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 4px 12px rgba(16,24,40,.05)}
-[data-theme=dark] .card{box-shadow:0 1px 2px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.3)}
-label{display:block;font-size:13px;font-weight:500;color:var(--mu);margin:10px 0 4px}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 25%,transparent)}
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--ac) 12%,transparent);color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 30%,transparent);margin:2px 4px 2px 0}
+:root{
+ --bg:#f4f4f5;--sbg:#ffffff;--card:#ffffff;--tx:#18181b;--mu:#71717a;--bd:#e4e4e7;
+ --ac:#f59e0b;--ac2:#fbbf24;--on:#1a1200;--danger:#ef4444;--good:#22c55e;
+ --pri-low:#60a5fa;--pri-normal:#a1a1aa;--pri-high:#f59e0b;--pri-urgent:#f97316;--pri-imm:#ef4444;
+ padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+[data-theme=dark]{--bg:#0b0b0d;--sbg:#111114;--card:#17171b;--tx:#f4f4f5;--mu:#9a9aa2;--bd:#27272b;--on:#1a1200}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font:14px/1.5 Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--tx)}
+::selection{background:color-mix(in srgb,var(--ac) 35%,transparent)}
+button,input,select,textarea{font-family:inherit}
+a{color:var(--ac)}
+.app{display:flex;min-height:100vh}
+/* sidebar */
+aside{width:250px;flex:none;background:var(--sbg);border-right:1px solid var(--bd);display:flex;flex-direction:column;padding:18px 14px;gap:14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:9px;padding:2px 6px 10px;font-weight:700;font-size:16px}
+.brand .ic{width:30px;height:30px;border-radius:9px;background:linear-gradient(150deg,var(--ac),var(--ac2));display:flex;align-items:center;justify-content:center;font-size:16px}
+nav.main{display:flex;flex-direction:column;gap:2px}
+nav.main button{display:flex;align-items:center;gap:10px;text-align:left;background:none;border:0;color:var(--mu);padding:9px 10px;border-radius:8px;cursor:pointer;font:inherit;font-weight:500}
+nav.main button .ic{width:18px;text-align:center}
+nav.main button:hover{background:color-mix(in srgb,var(--ac) 8%,transparent)}
+nav.main button.on{background:color-mix(in srgb,var(--ac) 15%,transparent);color:var(--ac)}
+.sp{flex:1}
+.seg{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:3px;gap:2px}
+.seg button{flex:1;background:none;border:0;border-radius:7px;padding:7px 4px;font:inherit;font-weight:600;font-size:12px;color:var(--mu);cursor:pointer}
+.seg button.on{background:var(--ac);color:var(--on)}
+.side-lbl{font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin:2px 2px 0}
+.modbox{border:1.5px solid var(--ac);border-radius:12px;padding:11px;background:color-mix(in srgb,var(--ac) 6%,var(--sbg));cursor:pointer}
+.modbox .hi{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.modbox .rnd{font-size:11px;font-weight:700;color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,transparent);padding:2px 8px;border-radius:999px}
+.modbox .app-n{font-weight:700;font-size:14px;margin-top:6px}
+.modbox .mod-n{color:var(--mu);font-size:12.5px;margin-top:1px}
+.modbox .sw-hint{font-size:11px;color:var(--ac);font-weight:600;margin-top:8px;display:flex;align-items:center;gap:4px}
+.sw{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13.5px;color:var(--tx)}
+.sw input{appearance:none;-webkit-appearance:none;width:36px;height:20px;padding:0;border:0;border-radius:11px;background:var(--bd);position:relative;cursor:pointer;flex:none;transition:.2s}
+.sw input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+.sw input:checked{background:var(--ac)}.sw input:checked::after{left:18px}
+/* main */
+main{flex:1;min-width:0;padding:22px clamp(16px,3vw,32px) 40px}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.topbar h1{margin:0;font-size:22px;letter-spacing:-.01em}
+.topbar p{margin:4px 0 0;color:var(--mu);font-size:13.5px}
+button.b{background:var(--ac);color:var(--on);border:0;border-radius:8px;padding:10px 16px;cursor:pointer;font:inherit;font-weight:600;display:inline-flex;align-items:center;gap:7px}
+button.b:hover{background:var(--ac2)}
+button.g{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 13px;cursor:pointer;font:inherit;font-weight:500}
+button.g:hover{border-color:var(--ac);color:var(--ac)}
+button.g.acc{color:var(--ac);border-color:color-mix(in srgb,var(--ac) 40%,var(--bd))}
+button:disabled{opacity:.45;cursor:not-allowed}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:900px){.grid4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.grid4{grid-template-columns:1fr}aside{width:210px}}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:15px;display:flex;gap:12px;align-items:center}
+.stat .ic{width:38px;height:38px;border-radius:9px;background:color-mix(in srgb,var(--ac) 15%,transparent);color:var(--ac);display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.stat .lbl{color:var(--mu);font-size:12px}
+.stat .val{font-weight:700;font-size:15px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:16px}
+.card h3{margin:0 0 4px;font-size:15px}
+.card .sub{color:var(--mu);font-size:12.5px;margin:0 0 12px}
+.hi{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+label{display:block;font-size:12.5px;font-weight:600;color:var(--mu);margin:12px 0 5px}
+.hint{font-size:11.5px;color:var(--mu);margin:-2px 0 6px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 20%,transparent)}
+textarea{min-height:120px;resize:vertical}
+#oB{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;min-height:280px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:640px){.row3{grid-template-columns:1fr}}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--ac) 12%,transparent);color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 28%,transparent)}
 .badge.n{background:var(--bg);color:var(--mu);border-color:var(--bd)}
-#oB,pre{font-family:'JetBrains Mono',ui-monospace,monospace}#oB{font-size:12.5px}.hint{font-size:12px;color:var(--mu);margin:-2px 0 6px}
-input,select,textarea{width:100%;padding:8px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);font:inherit}
-textarea{min-height:130px;resize:vertical}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
-button.b{background:var(--ac);color:var(--on);border:0;border-radius:6px;padding:8px 14px;cursor:pointer;font:inherit}
-button.g{background:none;color:var(--ac);border:1px solid var(--bd);border-radius:6px;padding:5px 10px;cursor:pointer;font:inherit}
-.hide{display:none!important}.mu{color:var(--mu);font-size:12px}.pill{font-size:11px;padding:1px 8px;border-radius:10px;border:1px solid var(--bd)}
-.hi{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
-summary{cursor:pointer}.it{border-top:1px solid var(--bd);padding:10px 0}
-pre{white-space:pre-wrap;margin:8px 0 0;font:12px ui-monospace,monospace;color:var(--mu)}
-.sw{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;color:var(--tx);margin:6px 0}
-.sw input{appearance:none;-webkit-appearance:none;width:40px;height:22px;padding:0;border:0;border-radius:11px;background:var(--bd);position:relative;cursor:pointer;flex:none;transition:.2s}
-.sw input::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
-.sw input:checked{background:var(--ac)}.sw input:checked::after{left:20px}
-#modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:14px;z-index:9}
-#modal .card{width:100%;max-width:480px;margin:0}
-#swb .sq{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}#swb .sq.on{border-color:var(--tx)}
-#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 16px;border-radius:8px;opacity:0;transition:.2s;pointer-events:none;z-index:10}
-#toast.on{opacity:1}#pv{max-width:200px;border-radius:6px;margin-top:8px}
-.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;margin-right:7px;vertical-align:-2px}
-@keyframes sp{to{transform:rotate(360deg)}}
-button.b:disabled{opacity:.7;cursor:wait}
-/* ---------- dashboard ---------- */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:14px}
-.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
-.stat .k{font-size:12px;color:var(--mu)}
-.stat .v{font-size:26px;font-weight:600;line-height:1.2;margin-top:2px;letter-spacing:-.01em}
-.stat .v.sm{font-size:17px;padding-top:7px}
-.bar{position:sticky;top:57px;z-index:5;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;margin-bottom:14px}
-.sr{flex:1 1 230px;position:relative;display:flex;align-items:center}
-.sr input{padding-left:31px}
-.sr .mg{position:absolute;left:10px;opacity:.5;pointer-events:none;font-size:13px}
-.bar select{width:auto;min-width:130px;flex:0 1 auto}
-.vt{display:flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;margin-left:auto}
-.vt button{background:none;border:0;color:var(--mu);padding:8px 11px;cursor:pointer;font:inherit;line-height:1}
-.vt button.on{background:var(--ac);color:var(--on)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;align-items:stretch}
-.grid.list{grid-template-columns:1fr;gap:8px}
-.ic{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px}
-.ic .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.ic .pt{font-weight:600;font-size:15px}
-.ic .sum{font-size:14px;line-height:1.45}
-.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.chip{font-size:11.5px;font-weight:500;padding:2px 9px;border-radius:999px;border:1px solid var(--bd);background:var(--bg);color:var(--mu);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.chip.mod{flex:0 1 auto;min-width:0}
-.ic .pt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ic .top .st{flex:none}
-.ic .sum{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.grid.list .ic .sum{-webkit-line-clamp:2}
-.chip.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px}
-.chip.ac{color:var(--ac);border-color:color-mix(in srgb,var(--ac) 32%,transparent);background:color-mix(in srgb,var(--ac) 12%,transparent)}
-.st{font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
-.st.open{color:#f97316;background:color-mix(in srgb,#f97316 14%,transparent);border:1px solid color-mix(in srgb,#f97316 38%,transparent)}
-.st.res{color:#16a34a;background:color-mix(in srgb,#16a34a 14%,transparent);border:1px solid color-mix(in srgb,#16a34a 38%,transparent)}
-[data-theme=dark] .st.res{color:#4ade80}
-.qa{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:2px;opacity:0;transition:opacity .15s}
-.ic:hover .qa,.ic:focus-within .qa{opacity:1}
-@media(hover:none){.qa{opacity:1}}
-.qa button{font-size:12px;padding:4px 9px}
-.grid.list .ic{flex-direction:row;align-items:center;padding:10px 12px;flex-wrap:wrap;gap:10px}
-.grid.list .ic .sum{flex:1 1 260px;min-width:0}
-.grid.list .ic .top{order:-1}
-.grid.list .qa{margin:0;padding:0}
-.empty{grid-column:1/-1;text-align:center;padding:48px 18px;border:1px dashed var(--bd);border-radius:12px;background:var(--card)}
-.empty h3{font-size:16px;margin:10px 0 0}
-.empty p{color:var(--mu);margin:6px auto 14px;max-width:44ch}
-@media(max-width:700px){header{position:static}.bar{position:static}}
+.pri{padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;color:#fff}
+.mu{color:var(--mu)}.pill{font-size:11px;padding:1px 8px;border-radius:10px;border:1px solid var(--bd);color:var(--mu)}
+.hide{display:none!important}
+.list-row{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:13px 0;border-top:1px solid var(--bd)}
+.list-row:first-child{border-top:0}
+.list-row .t{font-weight:600;font-size:13.5px}
+.list-row .d{font-size:11.5px;color:var(--mu);margin-top:2px}
+.list-row .badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.empty{color:var(--mu);text-align:center;padding:26px 10px;font-size:13px}
+.mod-hd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:2px}
+.it{border-top:1px solid var(--bd);padding:11px 0;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:14px;z-index:30}
+#modal .card{width:100%;max-width:460px;margin:0;max-height:88vh;overflow:auto}
+#swb .sq{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}#swb .sq.on{border-color:var(--tx)}
+#toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:9px 17px;border-radius:8px;opacity:0;transition:.2s;pointer-events:none;z-index:40;font-size:13px}
+#toast.on{opacity:1}
+.pribar{display:flex;gap:6px;flex-wrap:wrap}
+.pribar button{border:1.5px solid var(--bd);background:var(--card);border-radius:999px;padding:5px 12px;font:inherit;font-weight:600;font-size:11.5px;cursor:pointer;color:var(--mu)}
+.pribar button.on{color:#fff;border-color:transparent}
 </style></head><body>
-<header><h1>🐞 Bug Writer</h1><nav><button data-t="dash" class="on">Dashboard</button><button data-t="gen">Generate</button><button data-t="his">History</button><button data-t="set">Settings</button></nav><span class="sp"></span><button class="b" id="nw">+ New issue</button></header>
-<main>
-<section id="gen" class="hide">
- <div class="card hi"><div id="ctx"></div><button class="g" id="chg">Change</button></div>
- <div class="card">
-  <label>Steps</label><div class="hint">One step per line (numbered or not), or separate steps with →. Only the title is generated; the body keeps your steps as written.</div><textarea id="steps" placeholder="1. Install and open through meta link&#10;2. Complete intro screen&#10;3. Tap on the continue button&#10;4. The trust screen showing."></textarea>
-  <div class="acts"><button class="b" id="go"><span id="goSpin" class="spin hide"></span><span id="goLabel">Generate issue</span></button><span class="badge n" id="how"></span></div></div>
- <div id="out" class="card hide"><label>Title</label><input id="oT"><label>Issue body</label><textarea id="oB" style="min-height:300px"></textarea>
-  <div class="acts"><button class="g" id="cT">Copy title</button><button class="g" id="cW">Copy bug</button><button class="g" id="clrAll">Clear all</button></div>
-  <div class="mu" id="autoNote" style="margin-top:6px"></div></div>
-</section>
-<section id="his" class="hide">
- <div id="list"></div>
- <div class="acts"><button class="g" id="exp2">Export JSON</button><label class="g" style="margin:0;cursor:pointer">Import<input type="file" id="imp" accept=".json" class="hide"></label></div>
-</section>
-<section id="dash">
- <div class="stats" id="stats"></div>
- <div class="bar">
-  <span class="sr"><span class="mg">🔍</span><input id="dq" placeholder="Search issues, modules, builds…" autocomplete="off"></span>
-  <select id="fApp"></select><select id="fBuild"></select>
-  <span class="vt"><button data-d="grid" id="vG" title="Card grid">⊞ Grid</button><button data-d="list" id="vL" title="Compact list">☰ List</button></span>
+<div class="app">
+<aside>
+ <div class="brand"><span class="ic">🐞</span> BugDesk</div>
+ <nav class="main">
+  <button data-t="dash" class="on"><span class="ic">🏠</span> Dashboard</button>
+  <button data-t="gen"><span class="ic">➕</span> New Bug</button>
+  <button data-t="his"><span class="ic">🕘</span> Bug History</button>
+  <button data-t="set"><span class="ic">⚙️</span> Settings</button>
+ </nav>
+ <div class="sp"></div>
+ <div class="side-lbl">Platform</div>
+ <div class="seg" id="platSeg">
+  <button data-p="ios">iOS</button><button data-p="android">Android</button><button data-p="web">Web</button>
  </div>
- <div id="dashList" class="grid"></div>
+ <div class="side-lbl">Active module</div>
+ <div class="modbox" id="modbox"></div>
+ <label class="sw" style="margin-top:2px"><input type="checkbox" id="dk"> Dark mode</label>
+</aside>
+<main>
+
+<section id="dash">
+ <div class="topbar"><div><h1>Welcome back 👋</h1><p>Here's what's happening in your QA workspace.</p></div><button class="b" id="nbr">＋ New bug report</button></div>
+ <div class="grid4">
+  <div class="stat"><div class="ic">🐞</div><div><div class="lbl">Total bugs generated</div><div class="val" id="stTotal">0</div></div></div>
+  <div class="stat"><div class="ic">📁</div><div><div class="lbl">Current project</div><div class="val" id="stApp">–</div></div></div>
+  <div class="stat"><div class="ic">🧩</div><div><div class="lbl">Current module</div><div class="val" id="stMod">–</div></div></div>
+  <div class="stat"><div class="ic">🔁</div><div><div class="lbl">Current round</div><div class="val" id="stRound">–</div></div></div>
+ </div>
+ <div class="card">
+  <div class="hi"><h3 style="margin:0">Recent bug reports</h3><button class="g" id="viewAll">View all →</button></div>
+  <div id="recent"></div>
+ </div>
 </section>
+
+<section id="gen" class="hide">
+ <div class="topbar"><div><h1>New bug report</h1><p>Write the repro steps, then generate a title and formatted description.</p></div></div>
+ <div class="card hi"><div id="ctx"></div><button class="g" id="chg">Change module</button></div>
+ <div class="card">
+  <label>Steps</label><div class="hint">One step per line (numbered or not), or separate steps with →. Only the title is generated; the body keeps your steps as written.</div>
+  <textarea id="steps" placeholder="1. Install and open through meta link&#10;2. Complete intro screen&#10;3. Tap on the continue button&#10;4. The trust screen showing."></textarea>
+  <div class="row3">
+   <div><label>Attachment link (optional)</label><input id="attL" placeholder="https://drive.google.com/... (screenshot/video)"></div>
+   <div><label>Live issue?</label><div class="seg" id="liveSeg" style="margin-top:1px"><button data-v="no" class="on">No</button><button data-v="yes">Yes</button></div></div>
+   <div><label>Priority</label><div class="pribar" id="priBar"></div></div>
+  </div>
+  <div class="acts"><button class="b" id="go">Generate issue</button><span class="badge n" id="how"></span></div>
+ </div>
+ <div id="out" class="card hide">
+  <div class="hi"><label style="margin:0">Title</label><button class="g" id="cT">Copy</button></div><input id="oT">
+  <div class="hi" style="margin-top:10px"><label style="margin:0">Issue body</label><button class="g" id="cB">Copy</button></div><textarea id="oB"></textarea>
+  <div class="acts">
+   <button class="b" id="sv">Save to history</button>
+   <button class="g acc" id="rmOpen">↗ Open in Redmine</button>
+   <button class="g acc" id="rmCopy">⧉ Copy for Redmine</button>
+   <span class="pill" id="rmWhich"></span>
+  </div>
+ </div>
+</section>
+
+<section id="his" class="hide">
+ <div class="topbar"><div><h1>Bug history</h1><p>Everything you've saved, grouped by module.</p></div></div>
+ <div id="list"></div>
+ <div class="acts"><button class="g" id="expXls">⇩ Export to Excel</button></div>
+</section>
+
 <section id="set" class="hide">
- <div class="card"><h3>Appearance</h3><label class="sw"><input type="checkbox" id="dk"> Dark mode</label><label>Accent color</label><div class="acts" id="swb" style="margin:0"></div></div>
- <div class="card"><h3>Issue format</h3><label>Bold style for the header and QA Suggestion lines</label><select id="bm"><option value="md">Markdown  **bold**</option><option value="tx">Textile  *bold*</option><option value="no">No bold</option></select></div>
- <div class="card"><h3>Module details</h3><div class="row"><div><label>App name *</label><input id="sA"></div><div><label>App version</label><input id="sV" placeholder="203.0.203"></div><div><label>Round name *</label><input id="sR" placeholder="R-2"></div><div><label>Active module *</label><input id="sM" list="sml"><datalist id="sml"></datalist></div></div>
+ <div class="topbar"><div><h1>Settings</h1></div></div>
+ <div class="card"><h3>Appearance</h3><p class="sub">Theme and accent color.</p><label class="sw"><input type="checkbox" id="dk2"> Dark mode</label><label>Accent color</label><div class="acts" id="swb" style="margin:0"></div></div>
+ <div class="card"><h3>Issue format</h3><p class="sub">Bold style used for header, QA suggestion and meta lines.</p><label>Bold style</label><select id="bm"><option value="md">Markdown  **bold**</option><option value="tx">Textile  *bold*</option><option value="no">No bold</option></select></div>
+ <div class="card"><h3>Module details</h3><p class="sub">Used as the default context for new bug reports.</p>
+  <div class="row3"><div><label>App name *</label><input id="sA"></div><div><label>App version</label><input id="sV" placeholder="203.0.203"></div><div><label>Round name *</label><input id="sR" placeholder="R-2"></div></div>
+  <label>Active module *</label><input id="sM" list="sml"><datalist id="sml"></datalist>
   <div class="acts"><button class="b" id="ss">Save details</button></div>
-</div>
+ </div>
+ <div class="card"><h3>Redmine projects</h3><p class="sub">New-issue URL per platform, used by "Open in Redmine" / "Copy for Redmine".</p>
+  <label>iOS project URL</label><input id="rIos" placeholder="https://pms.example.com/projects/ios-app/issues/new">
+  <label>Android project URL</label><input id="rAnd" placeholder="https://pms.example.com/projects/android-app/issues/new">
+  <label>Web project URL</label><input id="rWeb" placeholder="https://pms.example.com/projects/web-app/issues/new">
+  <div class="acts"><button class="b" id="rSave">Save Redmine URLs</button></div>
+ </div>
  <div class="card"><h3>API (optional)</h3>
   <label>AI provider</label><select id="prov"><option value="anthropic">Claude (Anthropic)</option><option value="openai">ChatGPT (OpenAI)</option><option value="gemini">Gemini (Google)</option><option value="custom">Custom (OpenAI-compatible)</option></select>
   <div id="custEp" class="hide"><label>Endpoint URL</label><input id="cep" placeholder="https://your-provider.com/v1/chat/completions"><div class="hint" style="margin-top:-2px">Must accept the OpenAI chat-completions request format. Use this for providers like Groq, Mistral, OpenRouter, local models, etc.</div></div>
   <label id="keyLbl">API key</label><div class="hi" style="gap:8px"><input id="key" type="password" autocomplete="off" placeholder="Paste key to turn on AI titles" style="flex:1"><button class="g" id="rmKey">Remove</button></div>
   <label id="modLbl">Model</label><input id="modl" placeholder="model name">
-  <div class="hint" style="margin-top:6px">Each provider keeps its own saved key and model, so switching providers doesn't erase the others — pick a provider and it loads what you saved for it. Clear a provider's key to fall back to offline titles when that provider is selected. Saved on this device only.</div>
+  <div class="hint" style="margin-top:6px">Each provider keeps its own saved key and model, so switching providers doesn't erase the others. Clear a provider's key to fall back to offline titles when that provider is selected. Saved on this device only.</div>
  </div>
 </section>
-</main><div id="modal" class="hide"></div><div id="toast"></div>
+
+</main></div><div id="modal" class="hide"></div><div id="toast"></div>
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const K='bugwriter_v2',HEAD='Follow the following steps & generate the issue.',QAL=['QA Suggestion:','Note for Developer: Check all options after applying the solution.','Is it generated every time? => Yes/No','is it generated in Live version? =>Yes/No','Did you attach a Image/Video of the issue? => Yes/No'];
+const K='bugwriter_v3',OLDK='bugwriter_v2',HEAD='Follow the following steps & generate the issue.',
+ QAL=['QA Suggestion:','Note for Developer: Check all options after applying the solution.','Is it generated every time? => Yes/No','is it generated in Live version? =>Yes/No','Did you attach a Image/Video of the issue? => Yes/No'];
 const bold=t=>({md:`**${t}**`,tx:`*${t}*`}[S.bold]||t);
 const DEFMODEL={anthropic:'claude-sonnet-4-6',openai:'gpt-4o-mini',gemini:'gemini-2.5-flash',custom:''};
-let S={cfg:{app:'',version:'',module:'',round:'',provider:'anthropic',keys:{anthropic:'',openai:'',gemini:'',custom:''},models:{...DEFMODEL},customEndpoint:''},modules:[],items:[],dark:matchMedia('(prefers-color-scheme:dark)').matches,bold:'md'};
-try{const r=JSON.parse(localStorage.getItem(K)||'null');if(r){S=Object.assign(S,r);S.cfg=Object.assign({app:'',version:'',module:'',round:'',provider:'anthropic',keys:{anthropic:'',openai:'',gemini:'',custom:''},models:{...DEFMODEL},customEndpoint:''},r.cfg);
- S.cfg.keys=Object.assign({anthropic:'',openai:'',gemini:'',custom:''},r.cfg.keys);S.cfg.models=Object.assign({...DEFMODEL},r.cfg.models);
- if(r.cfg.key&&!S.cfg.keys.anthropic){S.cfg.keys.anthropic=r.cfg.key} // migrate old single-key field
-}}catch(e){}
-let HM=null,EXP=new Set();const C=S.cfg,save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Could not save locally')}};
+const PLABEL={anthropic:'Anthropic',openai:'OpenAI',gemini:'Gemini',custom:'Custom'};
+const PLATS={ios:'iOS',android:'Android',web:'Web'};
+const PRI=[['Low','#60a5fa'],['Normal','#a1a1aa'],['High','#f59e0b'],['Urgent','#f97316'],['Immediate','#ef4444']];
+const priColor=p=>(PRI.find(x=>x[0]===p)||PRI[1])[1];
+
+let S={cfg:{app:'',version:'',module:'',round:'',provider:'anthropic',keys:{anthropic:'',openai:'',gemini:'',custom:''},models:{...DEFMODEL},customEndpoint:'',
+   redmine:{ios:'https://pms.optimumbrew.com/projects/iha_ios/issues/new',android:'https://pms.optimumbrew.com/projects/cp-photo-editor-suite/issues/new',web:''}},
+ modules:[],items:[],dark:matchMedia('(prefers-color-scheme:dark)').matches,bold:'md',platform:'android'};
+
+function migrate(raw){
+ if(!raw)return;
+ S=Object.assign(S,raw);
+ S.cfg=Object.assign({app:'',version:'',module:'',round:'',provider:'anthropic',keys:{anthropic:'',openai:'',gemini:'',custom:''},models:{...DEFMODEL},customEndpoint:'',redmine:{ios:'',android:'',web:''}},raw.cfg);
+ S.cfg.keys=Object.assign({anthropic:'',openai:'',gemini:'',custom:''},raw.cfg?.keys);
+ S.cfg.models=Object.assign({...DEFMODEL},raw.cfg?.models);
+ S.cfg.redmine=Object.assign({ios:'https://pms.optimumbrew.com/projects/iha_ios/issues/new',android:'https://pms.optimumbrew.com/projects/cp-photo-editor-suite/issues/new',web:''},raw.cfg?.redmine);
+ if(raw.cfg?.key&&!S.cfg.keys.anthropic)S.cfg.keys.anthropic=raw.cfg.key;
+ S.platform=raw.platform||'android';
+}
+try{
+ let r=JSON.parse(localStorage.getItem(K)||'null');
+ if(!r){const old=JSON.parse(localStorage.getItem(OLDK)||'null');if(old)r=old}
+ migrate(r);
+}catch(e){}
+const C=S.cfg;
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Could not save locally')}};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800)}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1900)}
 async function copy(v){try{await navigator.clipboard.writeText(v)}catch(e){const a=document.createElement('textarea');a.value=v;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('Copied')}
 function modal(title,body,o){const m=$('#modal');m.innerHTML=`<div class="card"><h3>${title}</h3>${body}<div class="acts" style="justify-content:flex-end">${o.cancel===false?'':'<button class="g" id="mc">Cancel</button>'}<button class="b" id="mo">${o.ok||'Save'}</button></div></div>`;m.classList.remove('hide');
  const close=()=>m.classList.add('hide');if($('#mc'))$('#mc').onclick=close;$('#mo').onclick=()=>{if(o.onOk()!==false)close()}}
@@ -140,42 +222,75 @@ const ask=(msg,fn)=>modal('Please confirm',`<p>${msg}</p>`,{ok:'Yes, delete',onO
 const ctxOK=()=>C.app&&C.module&&C.round;
 const ver=v=>{v=(v||'').trim().replace(/^v\s*/i,'');return v?` (V ${v})`:''};
 const addMod=m=>{if(m&&!S.modules.includes(m))S.modules.push(m)};
-function renderCtx(){$('#ctx').innerHTML=ctxOK()?`<span class="badge">${esc(C.app)}</span>${C.version?`<span class="badge n">${esc(ver(C.version).trim().slice(1,-1))}</span>`:''}<span class="badge n">Module: ${esc(C.module)}</span><span class="badge n">Round: ${esc(C.round)}</span>`:'<span class="mu">Set app name, module and round to start</span>'}
-function ctxModal(force){modal('Set active details',`<label>App name *</label><input id="mA" value="${esc(C.app)}"><label>App version (optional, e.g. 203.0.203)</label><input id="mV" value="${esc(C.version)}"><label>Module name *</label><input id="mM" list="ml" value="${esc(C.module)}"><datalist id="ml">${S.modules.map(m=>`<option value="${esc(m)}">`).join('')}</datalist><label>Round name *</label><input id="mR" value="${esc(C.round)}" placeholder="R-2">`,
- {cancel:!force||!!ctxOK(),onOk(){const a=$('#mA').value.trim(),m=$('#mM').value.trim(),r=$('#mR').value.trim();if(!a||!m||!r){toast('App name, module and round are required');return false}
- Object.assign(C,{app:a,version:$('#mV').value.trim(),module:m,round:r});addMod(m);save();renderCtx();renderSet()}})}
-$('#chg').onclick=()=>ctxModal(false);
-function goTab(t){$$('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));['gen','his','dash','set'].forEach(id=>$('#'+id).classList.toggle('hide',id!==t));
- if(t==='his'){HM=null;renderList()}if(t==='dash')renderDash();if(t==='set')renderSet();scrollTo({top:0})}
-$$('nav button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
-$('#nw').onclick=()=>{goTab('gen');if(!ctxOK())return ctxModal(true);$('#steps').focus()};
-// theme
-const ACC=[['Teal','#0d9488','#2dd4bf'],['Blue','#2563eb','#60a5fa'],['Green','#16a34a','#4ade80'],['Orange','#ea580c','#fb923c'],['Rose','#e11d48','#fb7185'],['Indigo','#4f46e5','#818cf8']];
-const theme=()=>{const d=document.documentElement,a=ACC[S.acc||0]||ACC[0];d.dataset.theme=S.dark?'dark':'light';d.style.setProperty('--ac',S.dark?a[2]:a[1])};
+
+/* ---------- nav ---------- */
+function showView(t){
+ $$('nav.main button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
+ ['dash','gen','his','set'].forEach(id=>$('#'+id).classList.toggle('hide',id!==t));
+ if(t==='his'){renderList()}
+ if(t==='set')renderSet();
+ if(t==='dash')renderDash();
+ if(t==='gen')renderCtx();
+ window.scrollTo(0,0);
+}
+$$('nav.main button').forEach(b=>b.onclick=()=>showView(b.dataset.t));
+$('#nbr').onclick=()=>showView('gen');
+$('#viewAll').onclick=()=>showView('his');
+
+/* ---------- theme ---------- */
+const ACC=[['Amber','#f59e0b','#fbbf24'],['Teal','#0d9488','#2dd4bf'],['Blue','#2563eb','#60a5fa'],['Green','#16a34a','#4ade80'],['Rose','#e11d48','#fb7185'],['Indigo','#4f46e5','#818cf8']];
+const theme=()=>{const d=document.documentElement,a=ACC[S.acc||0]||ACC[0];d.dataset.theme=S.dark?'dark':'light';d.style.setProperty('--ac',S.dark?a[2]:a[1]);d.style.setProperty('--ac2',a[2]);$('#dk').checked=S.dark;$('#dk2').checked=S.dark};
 $('#swb').onclick=e=>{const i=e.target.dataset.ac;if(i==null)return;S.acc=+i;save();theme();renderSet()};
 $('#dk').onchange=e=>{S.dark=e.target.checked;save();theme()};
-// modules
+$('#dk2').onchange=e=>{S.dark=e.target.checked;save();theme()};
+
+/* ---------- platform switch ---------- */
+function renderPlat(){$$('#platSeg button').forEach(b=>b.classList.toggle('on',b.dataset.p===S.platform));
+ $('#rmWhich').textContent=C.redmine[S.platform]?`→ ${PLATS[S.platform]} Redmine project`:`No ${PLATS[S.platform]} Redmine URL set (Settings)`}
+$('#platSeg').onclick=e=>{const p=e.target.dataset.p;if(!p)return;S.platform=p;save();renderPlat();renderDash()};
+
+/* ---------- active module (sidebar) ---------- */
+function renderModbox(){
+ $('#modbox').innerHTML=ctxOK()?
+  `<div class="hi"><span class="app-n" style="font-weight:700">${esc(C.app)}${esc(ver(C.version))}</span><span class="rnd">${esc(C.round)}</span></div>
+   <div class="mod-n">${esc(C.module)}</div>
+   <div class="sw-hint">⇄ Tap to switch module</div>`:
+  `<div class="mu" style="font-size:12.5px">No active module set</div><div class="sw-hint">⇄ Tap to set up</div>`;
+}
+$('#modbox').onclick=()=>ctxModal(false);
+function ctxModal(force){modal('Switch active module',
+ `<label>App name *</label><input id="mA" value="${esc(C.app)}"><label>App version (optional, e.g. 203.0.203)</label><input id="mV" value="${esc(C.version)}"><label>Module name *</label><input id="mM" list="ml" value="${esc(C.module)}"><datalist id="ml">${S.modules.map(m=>`<option value="${esc(m)}">`).join('')}</datalist><label>Round name *</label><input id="mR" value="${esc(C.round)}" placeholder="R-2">`,
+ {cancel:!force||!!ctxOK(),onOk(){const a=$('#mA').value.trim(),m=$('#mM').value.trim(),r=$('#mR').value.trim();if(!a||!m||!r){toast('App name, module and round are required');return false}
+ Object.assign(C,{app:a,version:$('#mV').value.trim(),module:m,round:r});addMod(m);save();renderCtx();renderModbox();renderSet();renderDash()}})}
+$('#chg').onclick=()=>ctxModal(false);
+function renderCtx(){$('#ctx').innerHTML=ctxOK()?`<span class="badge">${esc(C.app)}</span>${C.version?`<span class="badge n">${esc(ver(C.version).trim().slice(1,-1))}</span>`:''}<span class="badge n">Module: ${esc(C.module)}</span><span class="badge n">Round: ${esc(C.round)}</span><span class="badge n">${PLATS[S.platform]}</span>`:'<span class="mu">Set app name, module and round to start</span>'}
+
+/* ---------- modules ---------- */
 function renameMod(o,n){n=n.trim();if(!n||n===o)return false;if(S.modules.includes(n)){toast('Module already exists');return false}
- S.modules=S.modules.map(m=>m===o?n:m);S.items.forEach(i=>{if(i.module===o){i.module=n;i.title=i.title.replace(`(${o})`,`(${n})`)}});if(C.module===o)C.module=n;if(HM===o)HM=n;if(EXP.has(o)){EXP.delete(o);EXP.add(n)}save();renderCtx();return true}
-function delMod(m){const n=S.items.filter(i=>i.module===m).length;ask(`Delete module "${esc(m)}" and its ${n} issue(s)? This cannot be undone.`,()=>{S.modules=S.modules.filter(x=>x!==m);S.items=S.items.filter(i=>i.module!==m);EXP.delete(m);if(C.module===m)C.module='';save();renderCtx();renderSet();renderList()})}
+ S.modules=S.modules.map(m=>m===o?n:m);S.items.forEach(i=>{if(i.module===o){i.module=n;i.title=i.title.replace(`(${o})`,`(${n})`)}});if(C.module===o)C.module=n;save();renderCtx();renderModbox();return true}
+function delMod(m){const n=S.items.filter(i=>i.module===m).length;ask(`Delete module "${esc(m)}" and its ${n} issue(s)? This cannot be undone.`,()=>{S.modules=S.modules.filter(x=>x!==m);S.items=S.items.filter(i=>i.module!==m);if(C.module===m)C.module='';save();renderCtx();renderModbox();renderSet();renderList();renderDash()})}
 $('#bm').onchange=e=>{S.bold=e.target.value;save();toast('Saved')};
-const PLABEL={anthropic:'Anthropic',openai:'OpenAI',gemini:'Gemini',custom:'Custom'};
-function renderSet(){$('#bm').value=S.bold||'md';$('#dk').checked=S.dark;$('#swb').innerHTML=ACC.map((a,i)=>`<button class="sq${i===(S.acc||0)?' on':''}" data-ac="${i}" title="${a[0]}" style="background:${a[1]}"></button>`).join('');$('#sA').value=C.app;$('#sV').value=C.version;$('#sR').value=C.round;
- $('#sM').value=C.module;$('#sml').innerHTML=S.modules.map(m=>`<option value="${esc(m)}">`).join('');
- const p=C.provider||'anthropic';$('#prov').value=p;
- $('#keyLbl').textContent=`${PLABEL[p]} API key`;
- $('#key').value=C.keys[p]||'';
+
+/* ---------- settings ---------- */
+function renderSet(){
+ $('#bm').value=S.bold||'md';
+ $('#swb').innerHTML=ACC.map((a,i)=>`<button class="sq${i===(S.acc||0)?' on':''}" data-ac="${i}" title="${a[0]}" style="background:${a[1]}"></button>`).join('');
+ $('#sA').value=C.app;$('#sV').value=C.version;$('#sR').value=C.round;$('#sM').value=C.module;$('#sml').innerHTML=S.modules.map(m=>`<option value="${esc(m)}">`).join('');
+ $('#rIos').value=C.redmine.ios||'';$('#rAnd').value=C.redmine.android||'';$('#rWeb').value=C.redmine.web||'';
+ const p=C.provider||'anthropic';$('#prov').value=p;$('#keyLbl').textContent=`${PLABEL[p]} API key`;$('#key').value=C.keys[p]||'';
  $('#key').placeholder={anthropic:'Paste sk-ant-... key',openai:'Paste sk-... key',gemini:'Paste AIza... key',custom:'Paste API key'}[p];
  $('#modl').value=C.models[p]||'';$('#modl').placeholder=DEFMODEL[p]||'model name';
  $('#custEp').classList.toggle('hide',p!=='custom');$('#cep').value=C.customEndpoint||'';
 }
-$('#ss').onclick=()=>{const a=$('#sA').value.trim(),r=$('#sR').value.trim(),m=$('#sM').value.trim();if(!a||!r||!m)return toast('App name, round and module are required');Object.assign(C,{app:a,version:$('#sV').value.trim(),round:r,module:m});addMod(m);save();renderSet();renderCtx();toast('Saved')};
+$('#ss').onclick=()=>{const a=$('#sA').value.trim(),r=$('#sR').value.trim(),m=$('#sM').value.trim();if(!a||!r||!m)return toast('App name, round and module are required');Object.assign(C,{app:a,version:$('#sV').value.trim(),round:r,module:m});addMod(m);save();renderSet();renderCtx();renderModbox();renderDash();toast('Saved')};
+$('#rSave').onclick=()=>{C.redmine={ios:$('#rIos').value.trim(),android:$('#rAnd').value.trim(),web:$('#rWeb').value.trim()};save();renderPlat();toast('Redmine URLs saved')};
 $('#key').oninput=()=>{C.keys[C.provider]=$('#key').value.trim();save();updHow()};
 $('#rmKey').onclick=()=>{const p=C.provider;ask(`Remove the saved ${PLABEL[p]} API key from this device?`,()=>{C.keys[p]='';save();renderSet();updHow();toast(`${PLABEL[p]} key removed`)})};
 $('#modl').oninput=()=>{C.models[C.provider]=$('#modl').value.trim();save()};
 $('#cep').oninput=()=>{C.customEndpoint=$('#cep').value.trim();save()};
 $('#prov').onchange=()=>{C.provider=$('#prov').value;save();renderSet();updHow()};
-// generate
+
+/* ---------- generate ---------- */
 const updHow=()=>{const p=C.provider;$('#how').textContent=(C.keys[p]||'').trim()?`● AI title (${PLABEL[p]})`:'● Offline · no API'};
 const PLAIN=[[/\bcrash(es|ed|ing)?\b/gi,'app closes suddenly'],[/\banr\b/gi,'app freezes'],[/\bnull\b/gi,'missing'],[/\bui\b/gi,'screen'],[/\blag(s|ging)?\b/gi,'runs slowly'],[/\bcta\b/gi,'button']];
 const plain=s=>PLAIN.reduce((t,[r,v])=>t.replace(r,v),s||'').trim();
@@ -199,11 +314,8 @@ async function aiAnthropic(steps){const key=C.keys.anthropic,model=C.models.anth
  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:300,system:SYS,messages:[{role:'user',content:c}]})});
  if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse(d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim()).title}
 async function aiOpenAI(steps){const key=C.keys.openai,model=C.models.openai||DEFMODEL.openai;
- // OpenAI blocks direct browser calls (no CORS headers), so this goes through
- // the /api/openai serverless function instead of api.openai.com directly.
- const r=await fetch('/api/openai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key,model,sys:SYS,content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`})});
- const d=await r.json();if(!r.ok)throw new Error(d?.error?.message||d?.error||r.status);
- return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim()).title}
+ const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:SYS},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
+ if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim()).title}
 async function aiGemini(steps){const key=C.keys.gemini,model=C.models.gemini||DEFMODEL.gemini;
  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:SYS}]},contents:[{role:'user',parts:[{text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]}],generationConfig:{responseMimeType:'application/json'}})});
  if(!r.ok)throw new Error(r.status);const d=await r.json();const t=(d.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('');return JSON.parse(t.replace(/```json|```/g,'').trim()).title}
@@ -213,84 +325,98 @@ async function aiCustom(steps){const key=C.keys.custom,model=C.models.custom,ep=
  if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim()).title}
 const AI_FN={anthropic:aiAnthropic,openai:aiOpenAI,gemini:aiGemini,custom:aiCustom};
 async function ai(steps){return AI_FN[C.provider](steps)}
+
+/* ---------- priority prediction ---------- */
+const PKEY=[
+ ['Immediate',/\b(crash(es|ed|ing)?|force\s*close|app\s*closes?|data\s*loss|cannot\s*login|unable to log ?in|security|payment\s*fail|blocker|white\s*screen|black\s*screen|app\s*not\s*opening)\b/i],
+ ['Urgent',/\b(anr|freeze[sd]?|frozen|not\s*working|broken|fails?|failure|unable to|stuck|force\s*stop)\b/i],
+ ['High',/\b(wrong|incorrect|missing|duplicate(d)?|not\s*showing|doesn'?t\s*(work|load)|error)\b/i],
+ ['Low',/\b(ui|alignment|spacing|color|colour|typo|cosmetic|minor|overlap(ping)?)\b/i],
+];
+function predictPriority(text){const t=(text||'').toLowerCase();for(const[p,re]of PKEY)if(re.test(t))return p;return'Normal'}
+let curPri='Normal';
+function renderPriBar(){$('#priBar').innerHTML=PRI.map(([p,c])=>`<button data-p="${p}" style="${p===curPri?`background:${c};color:#fff;border-color:transparent`:''}" class="${p===curPri?'on':''}">${p}</button>`).join('')}
+$('#priBar').onclick=e=>{const p=e.target.dataset.p;if(!p)return;curPri=p;renderPriBar()};
+let liveVal='no';
+$('#liveSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;liveVal=v;$$('#liveSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))};
+
+const parse2=parse;
+let CUR=null;
 $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps').value.trim();
  if(!txt)return toast('Add some steps');
- const st=parse(txt);let d,aiErr=null;
- $('#go').disabled=true;$('#goSpin').classList.remove('hide');$('#goLabel').textContent='Generating…';
- try{d=(C.keys[C.provider]||'').trim()?await ai(txt):offline(st)}catch(e){aiErr=e?.message||String(e);d=offline(st)}
- $('#go').disabled=false;$('#goSpin').classList.add('hide');$('#goLabel').textContent='Generate issue';
+ const st=parse2(txt);let d;$('#go').disabled=true;
+ try{d=(C.keys[C.provider]||'').trim()?await ai(txt):offline(st)}catch(e){toast('API failed, used offline title');d=offline(st)}
+ $('#go').disabled=false;
+ curPri=predictPriority(`${d} ${txt}`);renderPriBar();
  const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}`;
- const body=`${bold(HEAD)}\n${st.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n${QAL.map(bold).join('\n')}`;
- $('#oT').value=title;$('#oB').value=body;$('#out').classList.remove('hide');
- // auto-save to history under the active module
- S.items.unshift({id:Date.now(),date:new Date().toISOString(),app:C.app,module:C.module,round:C.round,status:'Open',title,body});
- addMod(C.module);save();
- $('#autoNote').textContent='✓ Auto-saved to History under '+C.module;
- toast(aiErr?`AI failed (${aiErr}), used offline title — saved to history`:'Saved to history')};
-$('#cT').onclick=()=>copy($('#oT').value);
-$('#cW').onclick=()=>copy(`${$('#oT').value}\n\n${$('#oB').value}`);
-$('#clrAll').onclick=()=>{$('#steps').value='';$('#steps').focus();toast('Steps cleared')};
-// ---------- dashboard ----------
-const DF={q:'',app:'',build:''};
-const rel=d=>{const s=(Date.now()-new Date(d))/1e3;if(!isFinite(s))return'';if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';const n=Math.floor(s/86400);return n<30?n+'d ago':new Date(d).toLocaleDateString()};
-const short=(s,n=38)=>{s=String(s||'');return s.length>n?s.slice(0,n-1).replace(/[\s+\-–,]+$/,'')+'…':s};
-// stored titles look like: App (V 203.0.203) (Module) (R-2) : summary
-function pit(i){const t=i.title||'',v=t.match(/\(V\s*([^)]+)\)/i),ix=t.indexOf(' : ');
- // older items were saved without an app field: recover it from the title prefix
- const head=(ix>=0?t.slice(0,ix):t),app=(i.app||'').trim()||head.split(/\s*\(/)[0].trim()||'Unassigned';
- return{id:i.id,date:i.date,title:t,body:i.body||'',app,module:(i.module||'').trim()||'No module',round:i.round||'',version:v?v[1].trim():'',status:i.status==='Resolved'?'Resolved':'Open',summary:(ix>=0?t.slice(ix+3):t).trim()}}
-const ALL=()=>[...S.items].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(pit);
-const opts=(cur,none,list)=>`<option value="">${none}</option>`+list.map(v=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(v)}</option>`).join('');
-function renderDash(){const all=ALL();
- const projects=[...new Set(all.map(i=>i.app))].sort(),open=all.filter(i=>i.status==='Open').length;
- // builds are per app: picking a project narrows this list to that app's versions
- const builds=[...new Set(all.filter(i=>!DF.app||i.app===DF.app).map(i=>i.version).filter(Boolean))].sort((a,b)=>b.localeCompare(a,undefined,{numeric:true}));
- $('#stats').innerHTML=[['Total issues',all.length],['Projects',projects.length],['Open',open],['Last added',all[0]?rel(all[0].date):'—']]
-  .map(([k,v],n)=>`<div class="stat"><div class="k">${k}</div><div class="v${n===3?' sm':''}">${esc(String(v))}</div></div>`).join('');
- $('#fApp').innerHTML=opts(DF.app,'All projects',projects);
- if(DF.build&&!builds.includes(DF.build))DF.build='';
- $('#fBuild').innerHTML=opts(DF.build,DF.app?'All builds of '+DF.app:'All builds',builds);
- $('#fBuild').disabled=!builds.length;$('#dq').value=DF.q;
- const list=S.dashView==='list';$('#dashList').classList.toggle('list',list);
- $('#vG').classList.toggle('on',!list);$('#vL').classList.toggle('on',list);
- renderCards(all)}
-function renderCards(all){all=all||ALL();
- const q=DF.q.trim().toLowerCase();
- const f=all.filter(i=>(!DF.app||i.app===DF.app)&&(!DF.build||i.version===DF.build)
-  &&(!q||[i.summary,i.module,i.version,i.round,i.app,i.body].join(' ').toLowerCase().includes(q)));
- $('#dashList').innerHTML=f.length?f.map(i=>`<article class="ic" data-id="${i.id}">
-  <div class="top"><span class="pt" title="${esc(i.app)}">${esc(i.app)}</span><span class="st ${i.status==='Resolved'?'res':'open'}">${i.status}</span></div>
-  <div class="chips"><span class="chip mod" title="${esc(i.module)}">${esc(short(i.module))}</span>${i.version?`<span class="chip mono">v${esc(i.version)}</span>`:''}${i.round?`<span class="chip ac">${esc(i.round)}</span>`:''}<span class="chip">${rel(i.date)}</span></div>
-  <div class="sum" title="${esc(i.summary)}">${esc(i.summary)}</div>
-  <div class="qa"><button class="g" data-d="jira" data-id="${i.id}">Copy Jira</button><button class="g" data-d="md" data-id="${i.id}">Copy MD</button><button class="g" data-d="view" data-id="${i.id}">Open</button><button class="g" data-d="tog" data-id="${i.id}">${i.status==='Resolved'?'Reopen':'Resolve'}</button></div>
- </article>`).join('')
- :(all.length?`<div class="empty"><div style="font-size:30px">🔍</div><h3>No issues match these filters</h3><p>Try a different build or project, or clear the search.</p><button class="g" data-d="clr">Clear filters</button></div>`
-  :`<div class="empty"><div style="font-size:34px">🐞</div><h3>No issues yet</h3><p>Write your repro steps and Bug Writer turns them into a titled, formatted issue. Every one you generate lands here.</p><button class="b" data-d="go">Generate your first issue</button></div>`)}
-const toJira=s=>String(s||'').replace(/\*\*(.+?)\*\*/g,'*$1*');
-$('#dq').oninput=e=>{DF.q=e.target.value;renderCards()};
-$('#fApp').onchange=e=>{DF.app=e.target.value;DF.build='';renderDash()};
-$('#fBuild').onchange=e=>{DF.build=e.target.value;renderCards()};
-$('#dash').onclick=e=>{const b=e.target.closest('[data-d]');if(!b)return;const a=b.dataset.d;
- if(a==='go')return $('#nw').click();
- if(a==='clr'){DF.q=DF.app=DF.build='';return renderDash()}
- if(a==='grid'||a==='list'){S.dashView=a;save();return renderDash()}
- const i=S.items.find(x=>x.id==b.dataset.id);if(!i)return;
- if(a==='md')return copy(`${i.title}\n\n${i.body}`);
- if(a==='jira')return copy(`${toJira(i.title)}\n\n${toJira(i.body)}`);
- if(a==='tog'){i.status=i.status==='Resolved'?'Open':'Resolved';save();renderDash();return toast(`Marked ${i.status.toLowerCase()}`)}
- if(a==='view')modal('Issue',`<label>Title</label><input id="eT" value="${esc(i.title)}"><label>Issue body</label><textarea id="eB" style="min-height:260px">${esc(i.body)}</textarea>`,
-  {ok:'Save changes',onOk(){i.title=$('#eT').value.trim()||i.title;i.body=$('#eB').value;save();renderDash();toast('Saved')}})};
-// history: module headings with their issue lists
+ const attL=$('#attL').value.trim();
+ const metaLines=[`${bold('Priority:')} ${curPri}`,`${bold('Live issue:')} ${liveVal==='yes'?'Yes':'No'}`,`${bold('Platform:')} ${PLATS[S.platform]}`,`${bold('Attachment:')} ${attL?`Yes - ${attL}`:'No'}`];
+ const body=`${bold(HEAD)}\n${st.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n${metaLines.join('\n')}\n\n${QAL.map(bold).join('\n')}`;
+ CUR={module:C.module,round:C.round,platform:S.platform,priority:curPri,live:liveVal,attachment:attL};
+ $('#oT').value=title;$('#oB').value=body;$('#out').classList.remove('hide');renderPlat();
+ $('#out').scrollIntoView({behavior:'smooth',block:'nearest'})};
+$('#cT').onclick=()=>copy($('#oT').value);$('#cB').onclick=()=>copy($('#oB').value);
+$('#sv').onclick=()=>{S.items.unshift({id:Date.now(),date:new Date().toISOString(),module:CUR.module,round:CUR.round,platform:CUR.platform,priority:CUR.priority,live:CUR.live,attachment:CUR.attachment,status:'Open',title:$('#oT').value,body:$('#oB').value});addMod(CUR.module);save();toast('Saved to history');renderDash()};
+
+/* ---------- redmine ---------- */
+function redmineBase(){return C.redmine[S.platform]||''}
+$('#rmOpen').onclick=()=>{const base=redmineBase();if(!base)return toast(`No ${PLATS[S.platform]} Redmine URL — set it in Settings`);
+ const url=base+'?'+new URLSearchParams({'issue[subject]':$('#oT').value,'issue[description]':$('#oB').value}).toString();
+ window.open(url,'_blank');toast(`Opened ${PLATS[S.platform]} Redmine — title & description prefilled`)};
+$('#rmCopy').onclick=()=>{const t=`${$('#oT').value}\n\n${$('#oB').value}`;copy(t)};
+
+/* ---------- dashboard ---------- */
+function renderDash(){
+ $('#stTotal').textContent=S.items.length;
+ $('#stApp').textContent=ctxOK()?`${C.app}${ver(C.version)}`:'–';
+ $('#stMod').textContent=ctxOK()?C.module:'–';
+ $('#stRound').textContent=ctxOK()?C.round:'–';
+ const recent=S.items.slice(0,5);
+ $('#recent').innerHTML=recent.length?recent.map(i=>`
+  <div class="list-row"><div><div class="t">${esc(i.title)}</div><div class="d">${new Date(i.date).toLocaleString()}</div></div>
+   <div class="badges">${i.priority?`<span class="pri" style="background:${priColor(i.priority)}">${esc(i.priority)}</span>`:''}${i.platform?`<span class="pill">${esc(PLATS[i.platform]||i.platform)}</span>`:''}<span class="pill">${esc(i.round)}</span></div></div>`).join(''):
+  '<div class="empty">No bug reports yet — generate your first one.</div>';
+}
+
+/* ---------- history ---------- */
 function renderList(){const mods=[...new Set([...S.modules,...S.items.map(i=>i.module)])].sort();
- $('#list').innerHTML=mods.map(m=>{const L=S.items.filter(i=>i.module===m),open=EXP.has(m);
-  return `<div class="card"><div class="hi" data-a="mtog" data-m="${esc(m)}" style="cursor:pointer"><b>${open?'▾':'▸'} ${esc(m)} <span class="pill">${L.length}</span></b><span class="acts" style="margin:0"><button class="g" data-a="mren" data-m="${esc(m)}">Edit</button><button class="g" data-a="mdel" data-m="${esc(m)}">Delete</button></span></div>${open?(L.map(i=>`<div class="it hi"><span style="flex:1;min-width:200px">${esc(i.title)}</span><span class="acts" style="margin:0"><button class="g" data-a="ed" data-id="${i.id}">Edit</button><button class="g" data-a="del" data-id="${i.id}">Delete</button></span></div>`).join('')||'<p class="mu" style="margin:8px 0 0">No issues yet.</p>'):''}</div>`}).join('')||'<p class="mu">No issues yet.</p>'}
+ $('#list').innerHTML=mods.length?mods.map(m=>{const L=S.items.filter(i=>i.module===m);return `<div class="card"><div class="hi mod-hd"><b>${esc(m)} <span class="pill">${L.length}</span></b><span class="acts" style="margin:0"><button class="g" data-a="mren" data-m="${esc(m)}">Edit</button><button class="g" data-a="mdel" data-m="${esc(m)}">Delete</button></span></div>${L.map(i=>`<div class="it"><span style="flex:1;min-width:200px"><div>${esc(i.title)}</div><div class="d" style="font-size:11px;color:var(--mu)">${new Date(i.date).toLocaleString()}</div></span><span class="badges">${i.priority?`<span class="pri" style="background:${priColor(i.priority)}">${esc(i.priority)}</span>`:''}${i.platform?`<span class="pill">${esc(PLATS[i.platform]||i.platform)}</span>`:''}${i.live==='yes'?'<span class="pill" style="color:var(--danger);border-color:var(--danger)">Live</span>':''}${i.attachment?'<span class="pill">📎</span>':''}</span><span class="acts" style="margin:0"><button class="g" data-a="ed" data-id="${i.id}">Edit</button><button class="g" data-a="del" data-id="${i.id}">Delete</button></span></div>`).join('')||'<p class="mu" style="margin:8px 0 0">No issues yet.</p>'}</div>`}).join(''):'<div class="empty">No bug reports yet.</div>'}
 $('#his').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,i=S.items.find(x=>x.id==b.dataset.id),m=b.dataset.m;
- if(a==='mtog'){EXP.has(m)?EXP.delete(m):EXP.add(m);renderList()}
- else if(a==='del')ask('Delete this issue?',()=>{S.items=S.items.filter(x=>x!==i);save();renderList()});
- else if(a==='ed')modal('Edit issue',`<label>Title</label><input id="eT" value="${esc(i.title)}"><label>Body</label><textarea id="eB" style="min-height:240px">${esc(i.body)}</textarea>`,{onOk(){i.title=$('#eT').value.trim()||i.title;i.body=$('#eB').value;save();renderList()}});
+ if(a==='del')ask('Delete this issue?',()=>{S.items=S.items.filter(x=>x!==i);save();renderList();renderDash()});
+ else if(a==='ed')modal('Edit issue',`<label>Title</label><input id="eT" value="${esc(i.title)}"><label>Body</label><textarea id="eB" style="min-height:240px">${esc(i.body)}</textarea>`,{onOk(){i.title=$('#eT').value.trim()||i.title;i.body=$('#eB').value;save();renderList();renderDash()}});
  else if(a==='mren')modal('Edit module name',`<label>Module name</label><input id="eM" value="${esc(m)}">`,{onOk(){if(renameMod(m,$('#eM').value)===false)return false;renderList()}});
  else if(a==='mdel')delMod(m)};
-$('#exp2').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S.items,null,1)],{type:'application/json'}));a.download='bug-history.json';a.click()};
-$('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const a=JSON.parse(r.result),ids=new Set(S.items.map(x=>x.id));a.filter(x=>!ids.has(x.id)).forEach(x=>{S.items.push(x);addMod(x.module)});save();renderList();toast('Imported')}catch(x){toast('Invalid file')}};r.readAsText(f)};
-theme();renderCtx();renderSet();updHow();renderDash();if(!ctxOK())ctxModal(true);
+function xlsEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function buildXls(items){
+ const cols=['Module','Round','Platform','Priority','Live issue','Attachment','Date','Title','Body'];
+ const rows=items.map(i=>[i.module,i.round,PLATS[i.platform]||i.platform||'',i.priority||'',i.live==='yes'?'Yes':'No',i.attachment?i.attachment:'No',new Date(i.date).toLocaleString(),i.title,i.body]);
+ const head=cols.map(c=>`<th>${xlsEscape(c)}</th>`).join('');
+ const body=rows.map(r=>`<tr>${r.map(v=>`<td style="white-space:pre-wrap;vertical-align:top">${xlsEscape(v).replace(/\n/g,'<br>')}</td>`).join('')}</tr>`).join('');
+ return `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8">
+<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Bugs</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+<style>table{border-collapse:collapse}th,td{border:1px solid #ccc;padding:5px;font-family:Calibri,Arial,sans-serif;font-size:12px}th{background:#f1f1f1;font-weight:bold}</style>
+</head><body><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></body></html>`;
+}
+function downloadXls(items,filename){
+ if(!items.length)return toast('No issues to export');
+ const blob=new Blob([buildXls(items)],{type:'application/vnd.ms-excel'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
+}
+$('#expXls').onclick=()=>{
+ const mods=[...new Set([...S.modules,...S.items.map(i=>i.module)])].sort();
+ if(!mods.length)return toast('No modules to export');
+ const rowsHtml=mods.map(m=>`<label class="sw" style="margin:6px 0"><input type="checkbox" class="expMod" value="${esc(m)}" checked> ${esc(m)} <span class="pill">${S.items.filter(i=>i.module===m).length}</span></label>`).join('');
+ modal('Export to Excel',`<p class="mu" style="margin:0 0 6px">Choose one or more modules. Each export is a single .xls file (one sheet, one module column) you can open in Excel.</p>${rowsHtml}`,
+ {ok:'Export',onOk(){
+  const chosen=$$('.expMod').filter(c=>c.checked).map(c=>c.value);
+  if(!chosen.length){toast('Pick at least one module');return false}
+  const items=S.items.filter(i=>chosen.includes(i.module));
+  const fname=chosen.length===1?`bugs-${chosen[0].replace(/[^\w-]+/g,'_')}.xls`:'bugs-multiple-modules.xls';
+  downloadXls(items,fname);
+ }});
+};
+
+/* ---------- init ---------- */
+theme();renderCtx();renderModbox();renderPlat();renderSet();renderDash();renderPriBar();updHow();
+if(!ctxOK())ctxModal(true);
 </script></body></html>
