@@ -24,9 +24,10 @@ nav.main button .ic{width:18px;text-align:center}
 nav.main button:hover{background:color-mix(in srgb,var(--ac) 8%,transparent)}
 nav.main button.on{background:color-mix(in srgb,var(--ac) 15%,transparent);color:var(--ac)}
 .sp{flex:1}
-.seg{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:3px;gap:2px}
-.seg button{flex:1;background:none;border:0;border-radius:7px;padding:7px 4px;font:inherit;font-weight:600;font-size:12px;color:var(--mu);cursor:pointer}
-.seg button.on{background:var(--ac);color:var(--on)}
+.seg{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:3px;gap:2px;width:fit-content}
+.seg button{width:70px;background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:7px 8px;font:inherit;font-weight:600;font-size:12px;color:var(--mu);cursor:pointer;transition:all .15s}
+.seg button:hover{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 6%,var(--card))}
+.seg button.on{background:var(--ac);color:var(--on);border-color:var(--ac)}
 .side-lbl{font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin:2px 2px 0}
 .modbox{border:1.5px solid var(--ac);border-radius:12px;padding:11px;background:color-mix(in srgb,var(--ac) 6%,var(--sbg));cursor:pointer}
 .modbox .hi{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
@@ -88,8 +89,9 @@ textarea{min-height:120px;resize:vertical}
 #toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:9px 17px;border-radius:8px;opacity:0;transition:.2s;pointer-events:none;z-index:40;font-size:13px}
 #toast.on{opacity:1}
 .pribar{display:flex;gap:6px;flex-wrap:wrap}
-.pribar button{border:1.5px solid var(--bd);background:var(--card);border-radius:999px;padding:5px 12px;font:inherit;font-weight:600;font-size:11.5px;cursor:pointer;color:var(--mu)}
-.pribar button.on{color:#fff;border-color:transparent}
+.pribar button{border:1px solid var(--bd);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-weight:600;font-size:11.5px;cursor:pointer;color:var(--mu);transition:all .15s}
+.pribar button:hover{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,var(--card))}
+.pribar button.on{color:#fff;border-color:transparent;font-weight:700}
 </style></head><body>
 <div class="app">
 <aside>
@@ -131,11 +133,18 @@ textarea{min-height:120px;resize:vertical}
  <div class="card">
   <label>Steps</label><div class="hint">One step per line (numbered or not), or separate steps with →. Only the title is generated; the body keeps your steps as written.</div>
   <textarea id="steps" placeholder="1. Install and open through meta link&#10;2. Complete intro screen&#10;3. Tap on the continue button&#10;4. The trust screen showing."></textarea>
-  <div class="row3">
-   <div><label>Attachment link (optional)</label><input id="attL" placeholder="https://drive.google.com/... (screenshot/video)"></div>
-   <div><label>Live issue?</label><div class="seg" id="liveSeg" style="margin-top:1px"><button data-v="no" class="on">No</button><button data-v="yes">Yes</button></div></div>
-   <div><label>Priority</label><div class="pribar" id="priBar"></div></div>
+  <label style="margin-top:12px">Attachment link (optional)</label>
+  <input id="attL" placeholder="https://drive.google.com/... (screenshot/video)">
+  <label style="margin-top:12px">Issue Status</label>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:6px">
+   <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Live issue?</div><div class="seg" id="liveSeg"><button data-v="no" class="on">No</button><button data-v="yes">Yes</button></div></div>
+   <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Reproducible?</div><div class="seg" id="repSeg"><button data-v="yes">Yes</button><button data-v="no" class="on">No</button></div></div>
+   <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Image/Video?</div><div class="seg" id="imgSeg"><button data-v="no" class="on">No</button><button data-v="yes">Yes</button></div></div>
   </div>
+  <label style="margin-top:12px;display:none">Priority</label>
+  <div style="margin-top:6px;display:none"><div class="pribar" id="priBar"></div></div>
+  <label style="margin-top:12px">QA Suggestion</label>
+  <textarea id="qaInput" placeholder="Add QA suggestion here"></textarea>
   <div class="acts"><button class="b" id="go">Generate issue</button><span class="badge n" id="how"></span></div>
  </div>
  <div id="out" class="card hide">
@@ -183,8 +192,7 @@ textarea{min-height:120px;resize:vertical}
 </main></div><div id="modal" class="hide"></div><div id="toast"></div>
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const K='bugwriter_v3',OLDK='bugwriter_v2',HEAD='Follow the following steps & generate the issue.',
- QAL=['QA Suggestion:','Note for Developer: Check all options after applying the solution.','Is it generated every time? => Yes/No','is it generated in Live version? =>Yes/No','Did you attach a Image/Video of the issue? => Yes/No'];
+const K='bugwriter_v3',OLDK='bugwriter_v2',HEAD='Follow the following steps & generate the issue.';
 const bold=t=>({md:`**${t}**`,tx:`*${t}*`}[S.bold]||t);
 const DEFMODEL={anthropic:'claude-sonnet-4-6',openai:'gpt-4o-mini',gemini:'gemini-2.5-flash',custom:''};
 const PLABEL={anthropic:'Anthropic',openai:'OpenAI',gemini:'Gemini',custom:'Custom'};
@@ -230,7 +238,7 @@ function showView(t){
  if(t==='his'){renderList()}
  if(t==='set')renderSet();
  if(t==='dash')renderDash();
- if(t==='gen')renderCtx();
+ if(t==='gen'){renderCtx();priManuallySet=false;}
  window.scrollTo(0,0);
 }
 $$('nav.main button').forEach(b=>b.onclick=()=>showView(b.dataset.t));
@@ -261,7 +269,7 @@ $('#modbox').onclick=()=>ctxModal(false);
 function ctxModal(force){modal('Switch active module',
  `<label>App name *</label><input id="mA" value="${esc(C.app)}"><label>App version (optional, e.g. 203.0.203)</label><input id="mV" value="${esc(C.version)}"><label>Module name *</label><input id="mM" list="ml" value="${esc(C.module)}"><datalist id="ml">${S.modules.map(m=>`<option value="${esc(m)}">`).join('')}</datalist><label>Round name *</label><input id="mR" value="${esc(C.round)}" placeholder="R-2">`,
  {cancel:!force||!!ctxOK(),onOk(){const a=$('#mA').value.trim(),m=$('#mM').value.trim(),r=$('#mR').value.trim();if(!a||!m||!r){toast('App name, module and round are required');return false}
- Object.assign(C,{app:a,version:$('#mV').value.trim(),module:m,round:r});addMod(m);save();renderCtx();renderModbox();renderSet();renderDash()}})}
+ Object.assign(C,{app:a,version:$('#mV').value.trim(),module:m,round:r});addMod(m);save();renderCtx();renderModbox();renderSet();renderDash();priManuallySet=false;}})}
 $('#chg').onclick=()=>ctxModal(false);
 function renderCtx(){$('#ctx').innerHTML=ctxOK()?`<span class="badge">${esc(C.app)}</span>${C.version?`<span class="badge n">${esc(ver(C.version).trim().slice(1,-1))}</span>`:''}<span class="badge n">Module: ${esc(C.module)}</span><span class="badge n">Round: ${esc(C.round)}</span><span class="badge n">${PLATS[S.platform]}</span>`:'<span class="mu">Set app name, module and round to start</span>'}
 
@@ -335,24 +343,42 @@ const PKEY=[
 ];
 function predictPriority(text){const t=(text||'').toLowerCase();for(const[p,re]of PKEY)if(re.test(t))return p;return'Normal'}
 let curPri='Normal';
+let priManuallySet=false;
 function renderPriBar(){$('#priBar').innerHTML=PRI.map(([p,c])=>`<button data-p="${p}" style="${p===curPri?`background:${c};color:#fff;border-color:transparent`:''}" class="${p===curPri?'on':''}">${p}</button>`).join('')}
-$('#priBar').onclick=e=>{const p=e.target.dataset.p;if(!p)return;curPri=p;renderPriBar()};
+$('#priBar').onclick=e=>{const p=e.target.dataset.p;if(!p)return;curPri=p;priManuallySet=true;renderPriBar()};
 let liveVal='no';
 $('#liveSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;liveVal=v;$$('#liveSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))};
 
+let repVal='no';
+$('#repSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;repVal=v;$$('#repSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))};
+
+let imgVal='no';
+$('#imgSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;imgVal=v;$$('#imgSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))};
+
 const parse2=parse;
 let CUR=null;
+// Reset priority flag when steps change (for new bug entries)
+$('#steps').oninput=()=>{priManuallySet=false};
 $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps').value.trim();
  if(!txt)return toast('Add some steps');
  const st=parse2(txt);let d;$('#go').disabled=true;
  try{d=(C.keys[C.provider]||'').trim()?await ai(txt):offline(st)}catch(e){toast('API failed, used offline title');d=offline(st)}
  $('#go').disabled=false;
- curPri=predictPriority(`${d} ${txt}`);renderPriBar();
+ // Only auto-predict priority if user hasn't manually set it
+ if(!priManuallySet){curPri=predictPriority(`${d} ${txt}`);renderPriBar()}
  const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}`;
- const attL=$('#attL').value.trim();
- const metaLines=[`${bold('Priority:')} ${curPri}`,`${bold('Live issue:')} ${liveVal==='yes'?'Yes':'No'}`,`${bold('Platform:')} ${PLATS[S.platform]}`,`${bold('Attachment:')} ${attL?`Yes - ${attL}`:'No'}`];
- const body=`${bold(HEAD)}\n${st.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n${metaLines.join('\n')}\n\n${QAL.map(bold).join('\n')}`;
- CUR={module:C.module,round:C.round,platform:S.platform,priority:curPri,live:liveVal,attachment:attL};
+ 
+ // Build QA section from user inputs
+ let qaSection=`${bold('QA Suggestion:')}`;
+ const qaCustom=$('#qaInput').value.trim();
+ if(qaCustom){qaSection+=`\n${qaCustom}`}
+ qaSection+=`\n\n${bold('Is it generated every time?')} => ${repVal==='yes'?'Yes':'No'}`;
+ qaSection+=`\n${bold('is it generated in Live version?')} => ${liveVal==='yes'?'Yes':'No'}`;
+ const attUrl=$('#attL').value.trim();
+ qaSection+=`\n${bold('Did you attach a Image/Video of the issue?')} => ${attUrl?attUrl:'No'}`;
+ 
+ const body=`${bold(HEAD)}\n${st.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n${qaSection}`;
+ CUR={module:C.module,round:C.round,platform:S.platform,priority:curPri,live:liveVal,attachment:attUrl};
  $('#oT').value=title;$('#oB').value=body;$('#out').classList.remove('hide');renderPlat();
  $('#out').scrollIntoView({behavior:'smooth',block:'nearest'})};
 $('#cT').onclick=()=>copy($('#oT').value);$('#cB').onclick=()=>copy($('#oB').value);
