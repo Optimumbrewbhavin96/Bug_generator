@@ -315,23 +315,24 @@ function offline(st){if(!st.length)return'';
   if(v){trig=[v,...w.slice(1)].join(' ').replace(/\bthe\s+/gi,'').replace(/\b[A-Z][a-z]+\b/g,x=>x.toLowerCase());
    if(/\b(button|icon|option|toggle|link|banner|cta|card)\b/i.test(trig))for(let i=ti-1;i>=0;i--){const m=S2[i].match(CTX);if(m){const c=m[1].split(/\s+/).filter(x=>!STOP.test(x)).join(' ').toLowerCase();if(c&&!trig.toLowerCase().includes(c)){ctx=` of the ${c} ${m[2].toLowerCase()}`;break}}}}}
  return hasR?(trig?`${Rc} when ${trig}${ctx}`:Rc):(trig?`Problem occurs after ${trig}${ctx}`:cap(S2[L]))}
-const SYS='You write bug titles for QA testers. From the repro steps write ONE clear title describing the PROBLEM in plain everyday English that a non-technical person understands: what wrongly happens, when it happens (the user action that triggers it) and where (which screen/feature). Ignore setup/config steps and technical terms. Max 20 words. Example steps: 1. set "flyer_skip_onboarding_question": 1, 2. Install and open through meta link 3. Now complete intro screen 4. The Continue button is showing there 5. Tap on the continue button 6. The trust screen showing. => Title: "The trust screen showing when tapping on continue button of the intro screen". Also return "steps": the same steps, same count and order, with only spelling and grammar fixed (keep quoted keys and values unchanged). Return ONLY JSON: {"title":"...","steps":["..."]} with no app/module prefix.';
-async function aiAnthropic(steps){const key=C.keys.anthropic,model=C.models.anthropic||DEFMODEL.anthropic;
+const SYS='You write bug titles for QA testers. From the repro steps write ONE clear title describing the PROBLEM in plain everyday English that a non-technical person understands: what wrongly happens, when it happens (the user action that triggers it) and where (which screen/feature). Ignore setup/config steps and technical terms. Max 20 words. Example steps: 1. set "flyer_skip_onboarding_question": 1, 2. Install and open through meta link 3. Now complete intro screen 4. The Continue button is showing there 5. Tap on the continue button 6. The trust screen showing. => Title: "The trust screen showing when tapping on continue button of the intro screen". Return ONLY JSON: {"title":"..."} with no app/module prefix.';
+const GSYS='Fix ONLY spelling and grammar in each repro step. Keep the meaning, wording, order and count exactly; do not add or remove steps; keep quoted keys and values unchanged. Return ONLY JSON: {"steps":["..."]}';
+async function aiAnthropic(steps,sys=SYS){const key=C.keys.anthropic,model=C.models.anthropic||DEFMODEL.anthropic;
  const c=[{type:'text',text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}];
- const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:600,system:SYS,messages:[{role:'user',content:c}]})});
+ const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:600,system:sys,messages:[{role:'user',content:c}]})});
  if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse(d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim())}
-async function aiOpenAI(steps){const key=C.keys.openai,model=C.models.openai||DEFMODEL.openai;
- const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:SYS},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
+async function aiOpenAI(steps,sys=SYS){const key=C.keys.openai,model=C.models.openai||DEFMODEL.openai;
+ const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
  if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim())}
-async function aiGemini(steps){const key=C.keys.gemini,model=C.models.gemini||DEFMODEL.gemini;
- const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:SYS}]},contents:[{role:'user',parts:[{text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]}],generationConfig:{responseMimeType:'application/json'}})});
+async function aiGemini(steps,sys=SYS){const key=C.keys.gemini,model=C.models.gemini||DEFMODEL.gemini;
+ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]}],generationConfig:{responseMimeType:'application/json'}})});
  if(!r.ok)throw new Error(r.status);const d=await r.json();const t=(d.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('');return JSON.parse(t.replace(/```json|```/g,'').trim())}
-async function aiCustom(steps){const key=C.keys.custom,model=C.models.custom,ep=C.customEndpoint;
+async function aiCustom(steps,sys=SYS){const key=C.keys.custom,model=C.models.custom,ep=C.customEndpoint;
  if(!ep)throw new Error('no-endpoint');
- const r=await fetch(ep,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:SYS},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
+ const r=await fetch(ep,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
  if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim())}
 const AI_FN={anthropic:aiAnthropic,openai:aiOpenAI,gemini:aiGemini,custom:aiCustom};
-async function ai(steps){return AI_FN[C.provider](steps)}
+async function ai(steps,sys){return AI_FN[C.provider](steps,sys)}
 
 /* ---------- grammar fix (offline) ---------- */
 const TYPO=[[/\bdont\b/gi,"don't"],[/\bdoesnt\b/gi,"doesn't"],[/\bcant\b/gi,"can't"],[/\bwont\b/gi,"won't"],[/\bisnt\b/gi,"isn't"],[/\bteh\b/gi,'the'],[/\brecieve/gi,'receive'],[/\bscreeen\b/gi,'screen'],[/\bi\b/g,'I']];
@@ -372,10 +373,11 @@ $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps
  const st0=parse2(txt);let st=st0.map(fixStep),d;$('#go').disabled=true;
  try{
   if((C.keys[C.provider]||'').trim()){
-   const r=await ai(st.map((s,i)=>`${i+1}. ${s}`).join('\n'));d=r.title;
-   if(Array.isArray(r.steps)&&r.steps.length===st0.length)st=r.steps.map(x=>cap(String(x).replace(/^\s*\d+[\).:-]\s*/,'').trim()));
-  }else d=offline(st);
- }catch(e){toast('API failed, used offline fixes');d=offline(st)}
+   const [rt,rg]=await Promise.all([ai(txt),ai(txt,GSYS).catch(()=>null)]);
+   d=rt.title;
+   if(rg&&Array.isArray(rg.steps)&&rg.steps.length===st0.length)st=rg.steps.map(x=>cap(String(x).replace(/^\s*\d+[\).:-]\s*/,'').trim()));
+  }else d=offline(st0);
+ }catch(e){toast('API failed, used offline title');d=offline(st0)}
  $('#go').disabled=false;
  if(!priManuallySet){curPri=predictPriority(`${d} ${txt}`);renderPriBar()}
  const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}`;
