@@ -213,7 +213,7 @@ textarea{min-height:120px;resize:vertical}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const K='bugwriter_v3',OLDK='bugwriter_v2',HEAD='Follow the following steps & generate the issue.';
 const bold=t=>({md:`**${t}**`,tx:`*${t}*`}[S.bold]||t);
-const DEFMODEL={anthropic:'claude-haiku-4-5-20251001',openai:'gpt-4o-mini',gemini:'gemini-2.5-flash',custom:''};
+const DEFMODEL={anthropic:'claude-haiku-4-5-20251001',openai:'gpt-4o-mini',gemini:'gemini-3.8-flash',custom:''};
 const PLABEL={anthropic:'Anthropic',openai:'OpenAI',gemini:'Gemini',custom:'Custom'};
 const PLATS={ios:'iOS',android:'Android',web:'Web'};
 const PRI=[['Low','#60a5fa'],['Normal','#a1a1aa'],['High','#f59e0b'],['Urgent','#f97316'],['Immediate','#ef4444']];
@@ -238,7 +238,7 @@ try{
  if(!r){const old=JSON.parse(localStorage.getItem(OLDK)||'null');if(old)r=old}
  migrate(r);
 }catch(e){}
-const C=S.cfg;S.limits=S.limits||{};
+const C=S.cfg;S.limits=S.limits||{};if(C.models.gemini==='gemini-2.5-flash')C.models.gemini=DEFMODEL.gemini;
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Could not save locally')}};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1900)}
@@ -368,9 +368,20 @@ async function aiAnthropic(steps,sys=SYS){const key=C.keys.anthropic,custom=(C.m
 async function aiOpenAI(steps,sys=SYS){const key=C.keys.openai,model=C.models.openai||DEFMODEL.openai;
  const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
  if(!r.ok)await bad(r);const d=await r.json();return pj(d.choices?.[0]?.message?.content||'{}')}
-async function aiGemini(steps,sys=SYS){const key=C.keys.gemini,model=C.models.gemini||DEFMODEL.gemini;
- const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]}],generationConfig:{responseMimeType:'application/json'}})});
- if(!r.ok)await bad(r);const d=await r.json();const t=(d.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('');return pj(t)}
+async function geminiCall(model,steps,sys){
+ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(C.keys.gemini)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]}],generationConfig:{responseMimeType:'application/json'}})});
+ if(!r.ok)await bad(r);
+ const d=await r.json();const t=(d.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('');return pj(t)}
+async function geminiModels(){
+ try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${encodeURIComponent(C.keys.gemini)}`);if(!r.ok)return[];const d=await r.json();
+  const score=n=>{const m=n.match(/gemini-(\d+(?:\.\d+)?)/);return (m?parseFloat(m[1])*10:0)-(/preview|exp/.test(n)?5:0)-(/lite/.test(n)?3:0)};
+  return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,'')).filter(n=>/flash/.test(n)&&!/image|tts|live|audio|embed/.test(n)).sort((x,y)=>score(y)-score(x)).slice(0,3)}catch(e){return[]}}
+async function aiGemini(steps,sys=SYS){const saved=(C.models.gemini||'').trim();
+ const first=[...new Set([saved||DEFMODEL.gemini,DEFMODEL.gemini])];let last;
+ const ok=(m,r)=>{if(m!==saved){C.models.gemini=m;save()}return r};
+ for(const m of first){try{return ok(m,await geminiCall(m,steps,sys))}catch(e){last=e;if(String(e.message)!=='404')throw e}}
+ for(const m of (await geminiModels()).filter(m=>!first.includes(m))){try{return ok(m,await geminiCall(m,steps,sys))}catch(e){last=e;if(String(e.message)!=='404')throw e}}
+ throw last}
 async function aiCustom(steps,sys=SYS){const key=C.keys.custom,model=C.models.custom,ep=C.customEndpoint;
  if(!ep)throw new Error('no-endpoint');
  const r=await fetch(ep,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
