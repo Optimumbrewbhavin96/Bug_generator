@@ -298,7 +298,7 @@ $('#cep').oninput=()=>{C.customEndpoint=$('#cep').value.trim();save()};
 $('#prov').onchange=()=>{C.provider=$('#prov').value;save();renderSet();updHow()};
 
 /* ---------- generate ---------- */
-const updHow=()=>{const p=C.provider;$('#how').textContent=(C.keys[p]||'').trim()?`● AI title + grammar (${PLABEL[p]})`:'● Offline · no API'};
+const updHow=()=>{const p=C.provider;$('#how').textContent=(C.keys[p]||'').trim()?`● AI title (${PLABEL[p]})`:'● Offline · no API'};
 const PLAIN=[[/\bcrash(es|ed|ing)?\b/gi,'app closes suddenly'],[/\banr\b/gi,'app freezes'],[/\bnull\b/gi,'missing'],[/\bui\b/gi,'screen'],[/\blag(s|ging)?\b/gi,'runs slowly'],[/\bcta\b/gi,'button']];
 const plain=s=>PLAIN.reduce((t,[r,v])=>t.replace(r,v),s||'').trim();
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
@@ -332,7 +332,7 @@ async function aiCustom(steps,sys=SYS){const key=C.keys.custom,model=C.models.cu
  const r=await fetch(ep,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
  if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim())}
 const AI_FN={anthropic:aiAnthropic,openai:aiOpenAI,gemini:aiGemini,custom:aiCustom};
-async function ai(steps,sys){return AI_FN[C.provider](steps,sys)}
+async function ai(steps,sys){for(let n=0;;n++){try{return await AI_FN[C.provider](steps,sys)}catch(e){if(String(e.message)==='429'&&n<2){await new Promise(r=>setTimeout(r,1500*(n+1)));continue}throw e}}}
 
 /* ---------- grammar fix (offline) ---------- */
 const TYPO=[[/\bdont\b/gi,"don't"],[/\bdoesnt\b/gi,"doesn't"],[/\bcant\b/gi,"can't"],[/\bwont\b/gi,"won't"],[/\bisnt\b/gi,"isn't"],[/\bteh\b/gi,'the'],[/\brecieve/gi,'receive'],[/\bscreeen\b/gi,'screen'],[/\bi\b/g,'I']];
@@ -372,12 +372,9 @@ $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps
  if(!txt)return toast('Add some steps');
  const st0=parse2(txt);let st=st0.map(fixStep),d;$('#go').disabled=true;
  try{
-  if((C.keys[C.provider]||'').trim()){
-   const [rt,rg]=await Promise.all([ai(txt),ai(txt,GSYS).catch(()=>null)]);
-   d=rt.title;
-   if(rg&&Array.isArray(rg.steps)&&rg.steps.length===st0.length)st=rg.steps.map(x=>cap(String(x).replace(/^\s*\d+[\).:-]\s*/,'').trim()));
-  }else d=offline(st0);
- }catch(e){toast('API failed, used offline title');d=offline(st0)}
+  if((C.keys[C.provider]||'').trim())d=(await ai(txt)).title;
+  else d=offline(st0);
+ }catch(e){toast(String(e.message)==='429'?'API limit (429) reached - used offline title':'API failed, used offline title');d=offline(st0)}
  $('#go').disabled=false;
  if(!priManuallySet){curPri=predictPriority(`${d} ${txt}`);renderPriBar()}
  const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}`;
