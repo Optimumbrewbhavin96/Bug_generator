@@ -1,4 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>BugDesk</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f59e0b'/%3E%3Cstop offset='1' stop-color='%23fbbf24'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url%28%23g%29'/%3E%3Ctext x='32' y='46' font-size='36' text-anchor='middle'%3E%F0%9F%90%9E%3C/text%3E%3C/svg%3E"><meta name="theme-color" content="#f59e0b">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -73,6 +74,7 @@ textarea{min-height:120px;resize:vertical}
 .pri{padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;color:#fff}
 .mu{color:var(--mu)}.pill{font-size:11px;padding:1px 8px;border-radius:10px;border:1px solid var(--bd);color:var(--mu)}
 .hide{display:none!important}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
 .list-row{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:13px 0;border-top:1px solid var(--bd)}
 .list-row:first-child{border-top:0}
 .list-row .t{font-weight:600;font-size:13.5px}
@@ -131,19 +133,34 @@ textarea{min-height:120px;resize:vertical}
  <div class="card">
   <label>Steps</label><div class="hint">One step per line (numbered or not), or separate steps with →. Grammar and spelling are corrected automatically when you generate.</div>
   <textarea id="steps" placeholder="1. Install and open through meta link&#10;2. Complete intro screen&#10;3. Tap on the continue button&#10;4. The trust screen showing."></textarea>
-  <label style="margin-top:12px">Attachment link (optional)</label>
-  <input id="attL" placeholder="https://drive.google.com/... (screenshot/video)">
-  <label style="margin-top:12px">Issue Status</label>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:6px">
-   <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Live issue?</div><div class="seg" id="liveSeg"><button data-v="no" class="on">No</button><button data-v="yes">Yes</button></div></div>
-   <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Reproducible?</div><div class="seg" id="repSeg"><button data-v="yes">Yes</button><button data-v="no" class="on">No</button></div></div>
-   <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Image/Video?</div><div class="seg" id="imgSeg"><button data-v="no" class="on">No</button><button data-v="yes">Yes</button></div></div>
+  <label style="margin-top:12px">Image/Video links (optional)</label>
+  <div class="hint">One link per line (Drive, YouTube, screenshot URLs). Multiple links are supported.</div>
+  <textarea id="attL" style="min-height:64px" placeholder="https://drive.google.com/... (screenshot/video)"></textarea>
+  <div id="attInfo" class="hint" style="margin:6px 0 0"></div>
+  <label style="margin-top:12px">QA Suggestion</label>
+  <textarea id="qaInput" placeholder="Add QA suggestion here"></textarea>
+  <label style="margin-top:12px">Environment &amp; Status</label>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:6px">
+   <div style="border:1px solid var(--bd);border-radius:10px;padding:12px">
+    <div class="side-lbl" style="margin:0 0 10px">Status</div>
+    <div style="display:flex;gap:22px;flex-wrap:wrap">
+     <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Live issue?</div><div class="seg" id="liveSeg"><button data-v="yes">Yes</button><button data-v="no" class="on">No</button></div></div>
+     <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Reproducible?</div><div class="seg" id="repSeg"><button data-v="yes" class="on">Yes</button><button data-v="no">No</button></div></div>
+     <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Image/Video (from attachment link)</div><div id="imgBadge" class="badge n" style="height:36px;padding:0 14px"></div></div>
+    </div>
+   </div>
+   <div style="border:1px solid var(--bd);border-radius:10px;padding:12px">
+    <div class="side-lbl" style="margin:0 0 10px">Environment (optional)</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+     <div><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Orientation</div><div class="seg" id="oriSeg"><button data-v="Portrait" class="on" style="width:92px">Portrait</button><button data-v="Landscape" style="width:92px">Landscape</button></div></div>
+     <div style="flex:1;min-width:220px"><div style="font-size:11.5px;color:var(--mu);margin-bottom:5px">Device &amp; OS details (if device specific)</div><input id="devIn" placeholder="e.g. Samsung Galaxy S23, Android 14"></div>
+    </div>
+   </div>
   </div>
   <label style="margin-top:12px;display:none">Priority</label>
   <div style="margin-top:6px;display:none"><div class="pribar" id="priBar"></div></div>
-  <label style="margin-top:12px">QA Suggestion</label>
-  <textarea id="qaInput" placeholder="Add QA suggestion here"></textarea>
   <div class="acts"><button class="b" id="go">Generate issue</button><span class="badge n" id="how"></span></div>
+  <div id="genErr" class="hint" style="color:var(--danger);margin-top:8px"></div>
  </div>
  <div id="out" class="card hide">
   <div id="tagRow" class="acts" style="margin:0 0 12px"></div>
@@ -181,10 +198,13 @@ textarea{min-height:120px;resize:vertical}
  </div>
  <div class="card"><h3>API (optional)</h3>
   <label>AI provider</label><select id="prov"><option value="anthropic">Claude (Anthropic)</option><option value="openai">ChatGPT (OpenAI)</option><option value="gemini">Gemini (Google)</option><option value="custom">Custom (OpenAI-compatible)</option></select>
+  <div id="apiStat" class="acts" style="margin:10px 0 0"></div>
   <div id="custEp" class="hide"><label>Endpoint URL</label><input id="cep" placeholder="https://your-provider.com/v1/chat/completions"><div class="hint" style="margin-top:-2px">Must accept the OpenAI chat-completions request format. Use this for providers like Groq, Mistral, OpenRouter, local models, etc.</div></div>
   <label id="keyLbl">API key</label><div class="hi" style="gap:8px"><input id="key" type="password" autocomplete="off" placeholder="Paste key to turn on AI titles" style="flex:1"><button class="g" id="rmKey">Remove</button></div>
   <label id="modLbl">Model</label><input id="modl" placeholder="model name">
-  <div class="hint" style="margin-top:6px">Each provider keeps its own saved key and model, so switching providers doesn't erase the others. Clear a provider's key to fall back to offline titles when that provider is selected. Saved on this device only.</div>
+  <div class="hint" style="margin-top:6px">Each provider keeps its own saved key and model, so switching providers doesn't erase the others. Clear a provider's key to fall back to a simple title made from your steps when that provider is selected. Saved on this device only.</div>
+  <div class="acts"><button class="b" id="apiSave">Save API settings</button><button class="g" id="apiTest">Test key</button></div>
+  <div id="apiTestOut" class="hint" style="margin-top:8px"></div>
  </div>
 </section>
 
@@ -193,7 +213,7 @@ textarea{min-height:120px;resize:vertical}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const K='bugwriter_v3',OLDK='bugwriter_v2',HEAD='Follow the following steps & generate the issue.';
 const bold=t=>({md:`**${t}**`,tx:`*${t}*`}[S.bold]||t);
-const DEFMODEL={anthropic:'claude-sonnet-4-6',openai:'gpt-4o-mini',gemini:'gemini-2.5-flash',custom:''};
+const DEFMODEL={anthropic:'claude-haiku-4-5-20251001',openai:'gpt-4o-mini',gemini:'gemini-2.5-flash',custom:''};
 const PLABEL={anthropic:'Anthropic',openai:'OpenAI',gemini:'Gemini',custom:'Custom'};
 const PLATS={ios:'iOS',android:'Android',web:'Web'};
 const PRI=[['Low','#60a5fa'],['Normal','#a1a1aa'],['High','#f59e0b'],['Urgent','#f97316'],['Immediate','#ef4444']];
@@ -218,7 +238,7 @@ try{
  if(!r){const old=JSON.parse(localStorage.getItem(OLDK)||'null');if(old)r=old}
  migrate(r);
 }catch(e){}
-const C=S.cfg;
+const C=S.cfg;S.limits=S.limits||{};
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Could not save locally')}};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1900)}
@@ -237,7 +257,7 @@ function showView(t){
  if(t==='his'){renderList()}
  if(t==='set')renderSet();
  if(t==='dash')renderDash();
- if(t==='gen'){renderCtx();priManuallySet=false;}
+ if(t==='gen'){renderCtx();priManuallySet=false;applyPreset();}
  window.scrollTo(0,0);
 }
 $$('nav.main button').forEach(b=>b.onclick=()=>showView(b.dataset.t));
@@ -295,11 +315,29 @@ $('#key').oninput=()=>{C.keys[C.provider]=$('#key').value.trim();save();updHow()
 $('#rmKey').onclick=()=>{const p=C.provider;ask(`Remove the saved ${PLABEL[p]} API key from this device?`,()=>{C.keys[p]='';save();renderSet();updHow();toast(`${PLABEL[p]} key removed`)})};
 $('#modl').oninput=()=>{C.models[C.provider]=$('#modl').value.trim();save()};
 $('#cep').oninput=()=>{C.customEndpoint=$('#cep').value.trim();save()};
+$('#apiSave').onclick=()=>{const p=C.provider;C.keys[p]=$('#key').value.trim();C.models[p]=$('#modl').value.trim();C.customEndpoint=$('#cep').value.trim();S.limits[p]=null;save();updHow();const n=Object.values(C.keys).filter(k=>(k||'').trim()).length;toast(`API settings saved (${n} key${n===1?'':'s'})`)};
+$('#apiTest').onclick=async()=>{const p=C.provider,out=$('#apiTestOut');C.keys[p]=$('#key').value.trim();C.models[p]=$('#modl').value.trim();C.customEndpoint=$('#cep').value.trim();save();
+ if(!C.keys[p]){out.innerHTML='<span style="color:var(--danger)">Add an API key first.</span>';return}
+ out.textContent='Testing '+PLABEL[p]+'...';
+ try{const r=await AI_FN[p]('1. Open app\n2. Tap on continue button\n3. The trust screen showing');out.innerHTML=`<span style="color:var(--good)">✔ ${PLABEL[p]} works.</span> Sample title: ${esc(r.title||'')}`}
+ catch(e){out.innerHTML=`<span style="color:var(--danger)">✖ ${PLABEL[p]} failed (${esc(e.message)}): ${esc(e.detail||'network / CORS error - check key and connection')}</span>`}};
 $('#prov').onchange=()=>{C.provider=$('#prov').value;save();renderSet();updHow()};
 
 /* ---------- generate ---------- */
-const updHow=()=>{const p=C.provider;$('#how').textContent=(C.keys[p]||'').trim()?`● AI title (${PLABEL[p]})`:'● Offline · no API'};
-const PLAIN=[[/\bcrash(es|ed|ing)?\b/gi,'app closes suddenly'],[/\banr\b/gi,'app freezes'],[/\bnull\b/gi,'missing'],[/\bui\b/gi,'screen'],[/\blag(s|ging)?\b/gi,'runs slowly'],[/\bcta\b/gi,'button']];
+const fmtT=ms=>{const t=Math.max(1,Math.ceil(ms/1000)),m=Math.floor(t/60);return m?`${m}m ${t%60}s`:`${t}s`};
+function limState(p){const L=S.limits[p],has=(C.keys[p]||'').trim(),now=Date.now();
+ if(!has)return{c:'#a1a1aa',t:'no key'};
+ if(L&&L.quota)return{c:'#ef4444',t:'quota exhausted (check billing)'};
+ if(L&&L.until>now)return{c:'#ef4444',t:'limit reached · resets in '+fmtT(L.until-now)};
+ return{c:'#22c55e',t:'available'}}
+function renderLimit(){
+ $('#apiStat').innerHTML=Object.keys(PLABEL).map(p=>{const x=limState(p);return `<span class="pill" style="display:inline-flex;align-items:center;gap:6px"><span class="dot" style="background:${x.c}"></span>${PLABEL[p]} · ${x.t}</span>`}).join('');
+ const p=C.provider,has=(C.keys[p]||'').trim(),x=limState(p);
+ $('#how').innerHTML=has?`<span class="dot" style="background:${x.c}"></span> AI title (${PLABEL[p]}) · ${x.t}`:'<span class="dot" style="background:#a1a1aa"></span> Simple title mode · no API key';
+ $('#how').title=has?'AI writes the title. If it is unavailable, a simple title is made from your steps instead.':'Generate still works: a simple title is made from your steps. Add an API key in Settings for AI-written titles.'}
+const updHow=()=>renderLimit();
+setInterval(renderLimit,1000);
+const PLAIN=[[/\bapp\s+crash(es|ed|ing)?\b/gi,'app closes suddenly'],[/\bcrash(es|ed|ing)?\b/gi,'closes suddenly'],[/\banr\b/gi,'app freezes'],[/\bnull\b/gi,'missing'],[/\bui\b/gi,'screen'],[/\blag(s|ging)?\b/gi,'runs slowly'],[/\bcta\b/gi,'button']];
 const plain=s=>PLAIN.reduce((t,[r,v])=>t.replace(r,v),s||'').trim();
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
 const GER={tap:'tapping',click:'clicking',press:'pressing',open:'opening',select:'selecting',choose:'choosing',swipe:'swiping',scroll:'scrolling',enter:'entering',type:'typing',close:'closing',go:'going',navigate:'navigating',install:'installing',launch:'launching',complete:'completing',skip:'skipping',allow:'allowing',deny:'denying',start:'starting',purchase:'purchasing',subscribe:'subscribing',download:'downloading',save:'saving',share:'sharing',edit:'editing',apply:'applying',add:'adding',remove:'removing',delete:'deleting',upload:'uploading',switch:'switching',change:'changing',generate:'generating',export:'exporting',cancel:'cancelling',back:'going back'};
@@ -307,32 +345,50 @@ const parse=t=>t.split(/\n|->|→/).map(s=>s.replace(/^\s*(\d+[\).:-]|[-*•])\s
 const ACTV=Object.keys(GER).join('|'),STOP=new RegExp('^('+ACTV+'|the|a|an|on|in|of|to|through|now|then|and|at|from|with|that|again)$','i');
 const CTX=/\b((?:[A-Za-z0-9]+\s+){0,2}?[A-Za-z0-9]+)\s+(screen|page|dialog|popup|pop-up|tab)\b/i;
 function offline(st){if(!st.length)return'';
- const S2=st.map(x=>x.replace(/^(now|then|after that|again|observe that|notice that)[\s,]+/i,'').replace(/[.,;]+$/,'').trim()),L=S2.length-1,isAct=x=>new RegExp('^('+ACTV+')\\b','i').test(x),hasR=!isAct(S2[L]);
- const Rc=hasR?cap(plain(S2[L]).replace(/\s(is|are)\s+(\w+ing)\b/i,' $2').replace(/\s+there$/i,'')):'';
+ const strip=x=>x.replace(/^(now|then|after that|again|observe that|notice that)[\s,]+/i,'').replace(/[.,;!]+$/,'').trim();
+ const S2=st.map(strip).filter(Boolean);if(!S2.length)return'';
+ const L=S2.length-1,isAct=x=>new RegExp('^('+ACTV+')\\b','i').test(x),hasR=!isAct(S2[L]);
  let ti=-1;for(let i=hasR?L-1:L;i>=0;i--)if(isAct(S2[i])){ti=i;break}
- let trig='',ctx='';
+ let trig='';
  if(ti>=0){const w=S2[ti].split(/\s+/),v=GER[w[0].toLowerCase()];
-  if(v){trig=[v,...w.slice(1)].join(' ').replace(/\bthe\s+/gi,'').replace(/\b[A-Z][a-z]+\b/g,x=>x.toLowerCase());
-   if(/\b(button|icon|option|toggle|link|banner|cta|card)\b/i.test(trig))for(let i=ti-1;i>=0;i--){const m=S2[i].match(CTX);if(m){const c=m[1].split(/\s+/).filter(x=>!STOP.test(x)).join(' ').toLowerCase();if(c&&!trig.toLowerCase().includes(c)){ctx=` of the ${c} ${m[2].toLowerCase()}`;break}}}}}
- return hasR?(trig?`${Rc} when ${trig}${ctx}`:Rc):(trig?`Problem occurs after ${trig}${ctx}`:cap(S2[L]))}
+  if(v)trig=[v,...w.slice(1)].join(' ').replace(/\b(the|a|an|on|to|through)\s+/gi,'').split(/\s+/).slice(0,6).join(' ')}
+ if(!hasR)return trig?`Problem after ${trig}`:cap(S2[L]);
+ const R=cap(plain(S2[L]).replace(/^(the|a|an)\s+/i,'').replace(/\s(is|are)\s+(\w+ing)\b/i,' $2').replace(/\s+(there|here)$/i,'').trim());
+ return trig?`${R} after ${trig}`:R}
 const SYS='You write bug titles for QA testers. From the repro steps write ONE clear title describing the PROBLEM in plain everyday English that a non-technical person understands: what wrongly happens, when it happens (the user action that triggers it) and where (which screen/feature). Ignore setup/config steps and technical terms. Max 20 words. Example steps: 1. set "flyer_skip_onboarding_question": 1, 2. Install and open through meta link 3. Now complete intro screen 4. The Continue button is showing there 5. Tap on the continue button 6. The trust screen showing. => Title: "The trust screen showing when tapping on continue button of the intro screen". Return ONLY JSON: {"title":"..."} with no app/module prefix.';
 const GSYS='Fix ONLY spelling and grammar in each repro step. Keep the meaning, wording, order and count exactly; do not add or remove steps; keep quoted keys and values unchanged. Return ONLY JSON: {"steps":["..."]}';
-async function aiAnthropic(steps,sys=SYS){const key=C.keys.anthropic,model=C.models.anthropic||DEFMODEL.anthropic;
- const c=[{type:'text',text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}];
- const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:600,system:sys,messages:[{role:'user',content:c}]})});
- if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse(d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim())}
+async function aiAnthropic(steps,sys=SYS){const key=C.keys.anthropic,custom=(C.models.anthropic||'').trim();
+ const list=[...new Set([custom||DEFMODEL.anthropic,DEFMODEL.anthropic,'claude-sonnet-4-6','claude-sonnet-4-5','claude-3-5-haiku-latest'])];let last;
+ for(const model of list){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:600,system:sys,messages:[{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
+  if(r.ok){const d=await r.json();return pj(d.content.map(x=>x.text||'').join(''))}
+  try{await bad(r)}catch(e){last=e;if(String(e.message)==='404'||(String(e.message)==='400'&&/model/i.test(e.detail||'')))continue;throw e}
+ }
+ throw last}
 async function aiOpenAI(steps,sys=SYS){const key=C.keys.openai,model=C.models.openai||DEFMODEL.openai;
  const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
- if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim())}
+ if(!r.ok)await bad(r);const d=await r.json();return pj(d.choices?.[0]?.message?.content||'{}')}
 async function aiGemini(steps,sys=SYS){const key=C.keys.gemini,model=C.models.gemini||DEFMODEL.gemini;
  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]}],generationConfig:{responseMimeType:'application/json'}})});
- if(!r.ok)throw new Error(r.status);const d=await r.json();const t=(d.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('');return JSON.parse(t.replace(/```json|```/g,'').trim())}
+ if(!r.ok)await bad(r);const d=await r.json();const t=(d.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('');return pj(t)}
 async function aiCustom(steps,sys=SYS){const key=C.keys.custom,model=C.models.custom,ep=C.customEndpoint;
  if(!ep)throw new Error('no-endpoint');
  const r=await fetch(ep,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
- if(!r.ok)throw new Error(r.status);const d=await r.json();return JSON.parse((d.choices?.[0]?.message?.content||'{}').replace(/```json|```/g,'').trim())}
+ if(!r.ok)await bad(r);const d=await r.json();return pj(d.choices?.[0]?.message?.content||'{}')}
+const pj=t=>{t=String(t||'').replace(/```json|```/g,'').trim();const m=t.match(/\{[\s\S]*\}/);return JSON.parse(m?m[0]:t)};
+async function bad(r){let detail='';let sec=0,quota=false;
+ try{const h=r.headers.get('retry-after');if(h)sec=+h||0;const t=await r.text();try{const j=JSON.parse(t),er=j.error||j;detail=(er&&er.message)||j.message||'';if(Array.isArray(j))detail=(j[0]&&j[0].error&&j[0].error.message)||''}catch(_){detail=t.slice(0,140)}
+  if(/insufficient_quota|exceeded your current quota.*billing/i.test(t))quota=true;
+  let m=t.match(/retryDelay"?\s*:\s*"?(\d+(?:\.\d+)?)s/i);if(m)sec=Math.max(sec,+m[1]);
+  m=t.match(/try again in (\d+(?:\.\d+)?)\s*(ms|s|m)\b/i);if(m){const v=+m[1];sec=Math.max(sec,m[2]==='ms'?v/1000:m[2]==='m'?v*60:v)}
+ }catch(e){}
+ const e=new Error(r.status);e.sec=Math.ceil(sec);e.quota=quota;e.detail=String(detail||'').slice(0,160);throw e}
 const AI_FN={anthropic:aiAnthropic,openai:aiOpenAI,gemini:aiGemini,custom:aiCustom};
-async function ai(steps,sys){for(let n=0;;n++){try{return await AI_FN[C.provider](steps,sys)}catch(e){if(String(e.message)==='429'&&n<2){await new Promise(r=>setTimeout(r,1500*(n+1)));continue}throw e}}}
+async function ai(steps,sys){const p=C.provider;
+ for(let n=0;;n++){try{const r=await AI_FN[p](steps,sys);if(S.limits[p]){S.limits[p]=null;save();renderLimit()}return r}
+  catch(e){if(String(e.message)==='429'){if(n<2&&(e.sec||0)<=5&&!e.quota){await new Promise(r=>setTimeout(r,1500*(n+1)));continue}
+    S.limits[p]={until:Date.now()+(e.sec||60)*1000,quota:!!e.quota};save();renderLimit()}
+   throw e}}}
 
 /* ---------- grammar fix (offline) ---------- */
 const TYPO=[[/\bdont\b/gi,"don't"],[/\bdoesnt\b/gi,"doesn't"],[/\bcant\b/gi,"can't"],[/\bwont\b/gi,"won't"],[/\bisnt\b/gi,"isn't"],[/\bteh\b/gi,'the'],[/\brecieve/gi,'receive'],[/\bscreeen\b/gi,'screen'],[/\bi\b/g,'I']];
@@ -359,40 +415,52 @@ $('#priBar').onclick=e=>{const p=e.target.dataset.p;if(!p)return;curPri=p;priMan
 let liveVal='no';
 $('#liveSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;liveVal=v;$$('#liveSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))};
 
-let repVal='no';
+let repVal='yes';
 $('#repSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;repVal=v;$$('#repSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))};
 
 let imgVal='no';
-$('#imgSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;imgVal=v;$$('#imgSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))};
+const setSeg=(id,v)=>$$('#'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+const allLinks=()=>$('#attL').value.split(/[\s,]+/).map(x=>x.trim()).filter(Boolean);
+const validLinks=()=>[...new Set(allLinks().filter(x=>/^https?:\/\/[^\s\/]+\.[^\s]+/i.test(x)))];
+const syncImg=()=>{const A=allLinks(),V=validLinks(),bad=A.length-A.filter(x=>V.includes(x)).length;
+ imgVal=V.length?'yes':'no';
+ $('#attInfo').innerHTML=V.length?`<span style="color:var(--good)">✔ ${V.length} link${V.length>1?'s':''} attached</span>${bad?` · <span style="color:var(--danger)">${bad} invalid ignored (must start with http)</span>`:''}`:A.length?'<span style="color:var(--danger)">⚠ Not a valid link - must start with http:// or https://</span>':'No attachment';$('#imgBadge').innerHTML=imgVal==='yes'?'<span class="dot" style="background:#22c55e"></span>&nbsp;Yes · '+V.length+' link'+(V.length>1?'s':'')+'':'<span class="dot" style="background:#a1a1aa"></span>&nbsp;No · no link'};
+$('#attL').oninput=syncImg;
+let oriVal='Portrait';
+$('#oriSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;oriVal=v;setSeg('oriSeg',v)};
+function applyPreset(){liveVal='no';repVal='yes';oriVal='Portrait';setSeg('liveSeg','no');setSeg('repSeg','yes');setSeg('oriSeg','Portrait');syncImg()}
 
 const parse2=parse;
 let CUR=null;
 $('#steps').oninput=()=>{priManuallySet=false};
 $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps').value.trim();
  if(!txt)return toast('Add some steps');
- const st0=parse2(txt);let st=st0.map(fixStep),d;$('#go').disabled=true;
+ const st0=parse2(txt);let st=st0.map(fixStep),d;$('#go').disabled=true;$('#genErr').textContent='';
  try{
-  if((C.keys[C.provider]||'').trim())d=(await ai(txt)).title;
+  if((C.keys[C.provider]||'').trim()){const r=await ai(txt);if(!r||!r.title)throw new Error('Empty AI reply');d=r.title}
   else d=offline(st0);
- }catch(e){toast(String(e.message)==='429'?'API limit (429) reached - used offline title':'API failed, used offline title');d=offline(st0)}
+ }catch(e){toast(String(e.message)==='429'?'AI limit reached - made a simple title':'AI unavailable - made a simple title');$('#genErr').textContent=`${PLABEL[C.provider]} failed (${e.message}${e.detail?': '+e.detail:''}). A simple title was made from your steps instead.`;d=offline(st0)}
  $('#go').disabled=false;
  if(!priManuallySet){curPri=predictPriority(`${d} ${txt}`);renderPriBar()}
- const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}`;
+ const dev=$('#devIn').value.trim();
+ const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}${dev?` (${dev})`:''}`;
 
  let qaSection=`${bold('QA Suggestion:')}`;
  const qaCustom=$('#qaInput').value.trim();
  if(qaCustom){qaSection+=`\n${qaCustom}`}
  qaSection+=`\n\n${bold('Is it generated every time?')} => ${repVal==='yes'?'Yes':'No'}`;
  qaSection+=`\n${bold('is it generated in Live version?')} => ${liveVal==='yes'?'Yes':'No'}`;
- const attUrl=$('#attL').value.trim();
- qaSection+=`\n${bold('Did you attach a Image/Video of the issue?')} => ${attUrl?attUrl:'No'}`;
+ syncImg();const attList=validLinks(),attUrl=attList.join('\n');
+ qaSection+=`\n${bold('Did you attach a Image/Video of the issue?')} => ${attUrl?(attList.length>1?'\n':'')+attUrl:'No'}`;
+ qaSection+=`\n${bold('Orientation:')} => ${oriVal}`;
+ if(dev)qaSection+=`\n${bold('Device & OS details:')} => ${dev}`;
 
  const body=`${bold(HEAD)}\n${st.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n${qaSection}`;
- CUR={module:C.module,round:C.round,platform:S.platform,priority:curPri,live:liveVal,attachment:attUrl};
+ CUR={module:C.module,round:C.round,platform:S.platform,priority:curPri,live:liveVal,attachment:attUrl,orientation:oriVal,device:dev};
  $('#oT').value=title;$('#oB').value=body;$('#out').classList.remove('hide');renderPlat();
  $('#tagRow').innerHTML=`<span style="font-size:18px">🏷️</span><span class="pri" style="background:${priColor(curPri)}">${esc(curPri)}</span><span class="pill">${esc(PLATS[S.platform])}</span><span class="pill">${esc(C.module)}</span><span class="pill">${esc(C.round)}</span>`;
  // auto-save to history
- const it={id:Date.now(),date:new Date().toISOString(),module:CUR.module,round:CUR.round,platform:CUR.platform,priority:CUR.priority,live:CUR.live,attachment:CUR.attachment,status:'Open',title,body};
+ const it={id:Date.now(),date:new Date().toISOString(),module:CUR.module,round:CUR.round,platform:CUR.platform,priority:CUR.priority,live:CUR.live,attachment:CUR.attachment,orientation:CUR.orientation,device:CUR.device,status:'Open',title,body};
  S.items.unshift(it);addMod(CUR.module);CUR.id=it.id;save();renderDash();
  $('#out').scrollIntoView({behavior:'smooth',block:'nearest'})};
 $('#cT').onclick=()=>copy($('#oT').value);$('#cB').onclick=()=>copy($('#oB').value);
@@ -430,8 +498,8 @@ $('#his').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=
  else if(a==='mdel')delMod(m)};
 function xlsEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function buildXls(items){
- const cols=['Module','Round','Platform','Priority','Live issue','Attachment','Date','Title','Body'];
- const rows=items.map(i=>[i.module,i.round,PLATS[i.platform]||i.platform||'',i.priority||'',i.live==='yes'?'Yes':'No',i.attachment?i.attachment:'No',new Date(i.date).toLocaleString(),i.title,i.body]);
+ const cols=['Module','Round','Platform','Priority','Live issue','Orientation','Device & OS','Attachment','Date','Title','Body'];
+ const rows=items.map(i=>[i.module,i.round,PLATS[i.platform]||i.platform||'',i.priority||'',i.live==='yes'?'Yes':'No',i.orientation||'',i.device||'',i.attachment?i.attachment:'No',new Date(i.date).toLocaleString(),i.title,i.body]);
  const head=cols.map(c=>`<th>${xlsEscape(c)}</th>`).join('');
  const body=rows.map(r=>`<tr>${r.map(v=>`<td style="white-space:pre-wrap;vertical-align:top">${xlsEscape(v).replace(/\n/g,'<br>')}</td>`).join('')}</tr>`).join('');
  return `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8">
@@ -460,5 +528,8 @@ $('#expXls').onclick=()=>{
 
 /* ---------- init ---------- */
 theme();renderCtx();renderModbox();renderPlat();renderSet();renderDash();renderPriBar();updHow();
+/* tab icon (PNG for maximum browser support) */
+try{const c=document.createElement('canvas');c.width=c.height=64;const g2=c.getContext('2d'),gr=g2.createLinearGradient(0,0,64,64);gr.addColorStop(0,'#f59e0b');gr.addColorStop(1,'#fbbf24');g2.fillStyle=gr;g2.beginPath();g2.roundRect(0,0,64,64,16);g2.fill();g2.font='36px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';g2.textAlign='center';g2.textBaseline='middle';g2.fillText('🐞',32,35);const l=document.querySelector('link[rel="icon"]');l.type='image/png';l.href=c.toDataURL('image/png')}catch(e){}
+applyPreset();
 if(!ctxOK())ctxModal(true);
 </script></body></html>
