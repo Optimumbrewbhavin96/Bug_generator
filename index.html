@@ -122,7 +122,7 @@ textarea{min-height:120px;resize:vertical}
   <div class="stat"><div class="ic">🔁</div><div><div class="lbl">Current round</div><div class="val" id="stRound">–</div></div></div>
  </div>
  <div class="card">
-  <div class="hi"><h3 style="margin:0">Recent bug reports</h3><button class="g" id="viewAll">View all →</button></div>
+  <div class="hi"><div><h3 style="margin:0">Modules</h3><div class="sub" style="margin:2px 0 0">Tap a module to open its bug history</div></div><button class="g" id="viewAll">View all →</button></div>
   <div id="recent"></div>
  </div>
 </section>
@@ -176,7 +176,7 @@ textarea{min-height:120px;resize:vertical}
 </section>
 
 <section id="his" class="hide">
- <div class="topbar"><div><h1>Bug history</h1><p>Everything you've generated, grouped by module.</p></div></div>
+ <div class="topbar"><div><h1>Bug history</h1><p>Everything you've generated, grouped by module. Click a module name to expand or collapse it.</p></div><div class="acts" style="margin:0"><button class="g" id="expAll">Expand all</button><button class="g" id="colAll">Collapse all</button></div></div>
  <div id="list"></div>
  <div class="acts"><button class="g" id="expXls">⇩ Export to Excel</button></div>
 </section>
@@ -186,7 +186,7 @@ textarea{min-height:120px;resize:vertical}
  <div class="card"><h3>Appearance</h3><p class="sub">Theme and accent color.</p><label class="sw"><input type="checkbox" id="dk2"> Dark mode</label><label>Accent color</label><div class="acts" id="swb" style="margin:0"></div></div>
  <div class="card"><h3>Issue format</h3><p class="sub">Bold style used for header, QA suggestion and meta lines.</p><label>Bold style</label><select id="bm"><option value="md">Markdown  **bold**</option><option value="tx">Textile  *bold*</option><option value="no">No bold</option></select></div>
  <div class="card"><h3>Module details</h3><p class="sub">Used as the default context for new bug reports.</p>
-  <div class="row3"><div><label>App name *</label><input id="sA"></div><div><label>App version</label><input id="sV" placeholder="203.0.203"></div><div><label>Round name *</label><input id="sR" placeholder="R-2"></div></div>
+  <div class="row3"><div><label>App name *</label><input id="sA"></div><div><label>App version</label><input id="sV" placeholder="203.0.203"></div><div><label>Round name *</label><select id="sR" onchange="rndChange('sR')"></select><input id="sRN" class="hide" placeholder="e.g. R-11" style="margin-top:6px"></div></div>
   <label>Active module *</label><input id="sM" list="sml"><datalist id="sml"></datalist>
   <div class="acts"><button class="b" id="ss">Save details</button></div>
  </div>
@@ -196,15 +196,14 @@ textarea{min-height:120px;resize:vertical}
   <label>Web project URL</label><input id="rWeb" placeholder="https://pms.example.com/projects/web-app/issues/new">
   <div class="acts"><button class="b" id="rSave">Save Redmine URLs</button></div>
  </div>
- <div class="card"><h3>API (optional)</h3>
-  <label>AI provider</label><select id="prov"><option value="anthropic">Claude (Anthropic)</option><option value="openai">ChatGPT (OpenAI)</option><option value="gemini">Gemini (Google)</option><option value="custom">Custom (OpenAI-compatible)</option></select>
+ <div class="card"><h3>Gemini API (optional)</h3>
   <div id="apiStat" class="acts" style="margin:10px 0 0"></div>
-  <div id="custEp" class="hide"><label>Endpoint URL</label><input id="cep" placeholder="https://your-provider.com/v1/chat/completions"><div class="hint" style="margin-top:-2px">Must accept the OpenAI chat-completions request format. Use this for providers like Groq, Mistral, OpenRouter, local models, etc.</div></div>
   <label id="keyLbl">API key</label><div class="hi" style="gap:8px"><input id="key" type="password" autocomplete="off" placeholder="Paste key to turn on AI titles" style="flex:1"><button class="g" id="rmKey">Remove</button></div>
   <label id="modLbl">Model</label><input id="modl" placeholder="model name">
-  <div class="hint" style="margin-top:6px">Each provider keeps its own saved key and model, so switching providers doesn't erase the others. Clear a provider's key to fall back to a simple title made from your steps when that provider is selected. Saved on this device only.</div>
+  <div class="hint" style="margin-top:6px">Add your Gemini API key to get AI-written titles. Without a key, a simple title is made from your steps. Saved on this device only.</div>
   <div class="acts"><button class="b" id="apiSave">Save API settings</button><button class="g" id="apiTest">Test key</button></div>
   <div id="apiTestOut" class="hint" style="margin-top:8px"></div>
+  <div class="hint" style="margin-top:12px;opacity:.7">BugDesk build 30-Sep-2026 · Gemini auto-model fix (default gemini-3.8-flash)</div>
  </div>
 </section>
 
@@ -213,24 +212,23 @@ textarea{min-height:120px;resize:vertical}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const K='bugwriter_v3',OLDK='bugwriter_v2',HEAD='Follow the following steps & generate the issue.';
 const bold=t=>({md:`**${t}**`,tx:`*${t}*`}[S.bold]||t);
-const DEFMODEL={anthropic:'claude-haiku-4-5-20251001',openai:'gpt-4o-mini',gemini:'gemini-3.8-flash',custom:''};
-const PLABEL={anthropic:'Anthropic',openai:'OpenAI',gemini:'Gemini',custom:'Custom'};
+const DEFMODEL={gemini:'gemini-3.8-flash'};
+const PLABEL={gemini:'Gemini'};
 const PLATS={ios:'iOS',android:'Android',web:'Web'};
 const PRI=[['Low','#60a5fa'],['Normal','#a1a1aa'],['High','#f59e0b'],['Urgent','#f97316'],['Immediate','#ef4444']];
 const priColor=p=>(PRI.find(x=>x[0]===p)||PRI[1])[1];
 
-let S={cfg:{app:'',version:'',module:'',round:'',provider:'anthropic',keys:{anthropic:'',openai:'',gemini:'',custom:''},models:{...DEFMODEL},customEndpoint:'',
+let S={cfg:{app:'',version:'',module:'',round:'',provider:'gemini',keys:{gemini:''},models:{...DEFMODEL},
    redmine:{ios:'https://pms.optimumbrew.com/projects/iha_ios/issues/new',android:'https://pms.optimumbrew.com/projects/cp-photo-editor-suite/issues/new',web:''}},
  modules:[],items:[],dark:matchMedia('(prefers-color-scheme:dark)').matches,bold:'md',platform:'android'};
 
 function migrate(raw){
  if(!raw)return;
  S=Object.assign(S,raw);
- S.cfg=Object.assign({app:'',version:'',module:'',round:'',provider:'anthropic',keys:{anthropic:'',openai:'',gemini:'',custom:''},models:{...DEFMODEL},customEndpoint:'',redmine:{ios:'',android:'',web:''}},raw.cfg);
- S.cfg.keys=Object.assign({anthropic:'',openai:'',gemini:'',custom:''},raw.cfg?.keys);
+ S.cfg=Object.assign({app:'',version:'',module:'',round:'',provider:'gemini',keys:{gemini:''},models:{...DEFMODEL},redmine:{ios:'',android:'',web:''}},raw.cfg);
+ S.cfg.keys={gemini:(raw.cfg?.keys?.gemini)||''};
  S.cfg.models=Object.assign({...DEFMODEL},raw.cfg?.models);
  S.cfg.redmine=Object.assign({ios:'https://pms.optimumbrew.com/projects/iha_ios/issues/new',android:'https://pms.optimumbrew.com/projects/cp-photo-editor-suite/issues/new',web:''},raw.cfg?.redmine);
- if(raw.cfg?.key&&!S.cfg.keys.anthropic)S.cfg.keys.anthropic=raw.cfg.key;
  S.platform=raw.platform||'android';
 }
 try{
@@ -238,7 +236,7 @@ try{
  if(!r){const old=JSON.parse(localStorage.getItem(OLDK)||'null');if(old)r=old}
  migrate(r);
 }catch(e){}
-const C=S.cfg;S.limits=S.limits||{};if(C.models.gemini==='gemini-2.5-flash')C.models.gemini=DEFMODEL.gemini;
+const C=S.cfg;C.provider='gemini';S.limits=S.limits||{};S.rounds=S.rounds||[];S.collapsed=S.collapsed||{};if(C.models.gemini==='gemini-2.5-flash')C.models.gemini=DEFMODEL.gemini;
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Could not save locally')}};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1900)}
@@ -248,6 +246,19 @@ function modal(title,body,o){const m=$('#modal');m.innerHTML=`<div class="card">
 const ask=(msg,fn)=>modal('Please confirm',`<p>${msg}</p>`,{ok:'Yes, delete',onOk:fn});
 const ctxOK=()=>C.app&&C.module&&C.round;
 const ver=v=>{v=(v||'').trim().replace(/^v\s*/i,'');return v?` (V ${v})`:''};
+/* ---------- round dropdown (R-1..R-10 + custom) ---------- */
+const rNum=x=>{const m=String(x).match(/\d+/);return m?+m[0]:9999};
+const roundOptions=()=>{const base=Array.from({length:10},(_,i)=>`R-${i+1}`);
+ return [...base,...S.rounds.filter(x=>!base.includes(x))].sort((a,b)=>rNum(a)-rNum(b)||a.localeCompare(b))};
+function roundOptsHTML(val){if(val&&!roundOptions().includes(val))S.rounds.push(val);
+ return `<option value="">Select round...</option>`+roundOptions().map(r=>`<option value="${esc(r)}"${r===val?' selected':''}>${esc(r)}</option>`).join('')+`<option value="__new">+ Add other round...</option>`}
+const roundSelectHTML=(id,val)=>`<select id="${id}" onchange="rndChange('${id}')">${roundOptsHTML(val)}</select><input id="${id}N" class="hide" placeholder="e.g. R-11" style="margin-top:6px">`;
+function fillRound(id,val){$('#'+id).innerHTML=roundOptsHTML(val);$('#'+id+'N').classList.add('hide');$('#'+id+'N').value=''}
+function rndChange(id){const n=$('#'+id).value==='__new',i=$('#'+id+'N');i.classList.toggle('hide',!n);if(n)i.focus()}
+function roundVal(id){const sel=$('#'+id);if(sel.value!=='__new')return sel.value;
+ let v=$('#'+id+'N').value.trim();if(!v)return'';
+ v=v.replace(/^r\s*-?\s*(\d+)$/i,'R-$1').replace(/^(\d+)$/,'R-$1');
+ if(!roundOptions().includes(v)){S.rounds.push(v);save()}return v}
 const addMod=m=>{if(m&&!S.modules.includes(m))S.modules.push(m)};
 
 /* ---------- nav ---------- */
@@ -286,15 +297,15 @@ function renderModbox(){
 }
 $('#modbox').onclick=()=>ctxModal(false);
 function ctxModal(force){modal('Switch active module',
- `<label>App name *</label><input id="mA" value="${esc(C.app)}"><label>App version (optional, e.g. 203.0.203)</label><input id="mV" value="${esc(C.version)}"><label>Module name *</label><input id="mM" list="ml" value="${esc(C.module)}"><datalist id="ml">${S.modules.map(m=>`<option value="${esc(m)}">`).join('')}</datalist><label>Round name *</label><input id="mR" value="${esc(C.round)}" placeholder="R-2">`,
- {cancel:!force||!!ctxOK(),onOk(){const a=$('#mA').value.trim(),m=$('#mM').value.trim(),r=$('#mR').value.trim();if(!a||!m||!r){toast('App name, module and round are required');return false}
+ `<label>App name *</label><input id="mA" value="${esc(C.app)}"><label>App version (optional, e.g. 203.0.203)</label><input id="mV" value="${esc(C.version)}"><label>Module name *</label><input id="mM" list="ml" value="${esc(C.module)}"><datalist id="ml">${S.modules.map(m=>`<option value="${esc(m)}">`).join('')}</datalist><label>Round name *</label>${roundSelectHTML('mR',C.round)}`,
+ {cancel:!force||!!ctxOK(),onOk(){const a=$('#mA').value.trim(),m=$('#mM').value.trim(),r=roundVal('mR');if(!a||!m||!r){toast('App name, module and round are required');return false}
  Object.assign(C,{app:a,version:$('#mV').value.trim(),module:m,round:r});addMod(m);save();renderCtx();renderModbox();renderSet();renderDash();priManuallySet=false;}})}
 $('#chg').onclick=()=>ctxModal(false);
 function renderCtx(){$('#ctx').innerHTML=ctxOK()?`<span class="badge">${esc(C.app)}</span>${C.version?`<span class="badge n">${esc(ver(C.version).trim().slice(1,-1))}</span>`:''}<span class="badge n">Module: ${esc(C.module)}</span><span class="badge n">Round: ${esc(C.round)}</span><span class="badge n">${PLATS[S.platform]}</span>`:'<span class="mu">Set app name, module and round to start</span>'}
 
 /* ---------- modules ---------- */
 function renameMod(o,n){n=n.trim();if(!n||n===o)return false;if(S.modules.includes(n)){toast('Module already exists');return false}
- S.modules=S.modules.map(m=>m===o?n:m);S.items.forEach(i=>{if(i.module===o){i.module=n;i.title=i.title.replace(`(${o})`,`(${n})`)}});if(C.module===o)C.module=n;save();renderCtx();renderModbox();return true}
+ S.modules=S.modules.map(m=>m===o?n:m);S.items.forEach(i=>{if(i.module===o){i.module=n;i.title=i.title.replace(`(${o})`,`(${n})`)}});if(C.module===o)C.module=n;if(S.collapsed[o]!==undefined){S.collapsed[n]=S.collapsed[o];delete S.collapsed[o]}save();renderCtx();renderModbox();return true}
 function delMod(m){const n=S.items.filter(i=>i.module===m).length;ask(`Delete module "${esc(m)}" and its ${n} issue(s)? This cannot be undone.`,()=>{S.modules=S.modules.filter(x=>x!==m);S.items=S.items.filter(i=>i.module!==m);if(C.module===m)C.module='';save();renderCtx();renderModbox();renderSet();renderList();renderDash()})}
 $('#bm').onchange=e=>{S.bold=e.target.value;save();toast('Saved')};
 
@@ -302,26 +313,23 @@ $('#bm').onchange=e=>{S.bold=e.target.value;save();toast('Saved')};
 function renderSet(){
  $('#bm').value=S.bold||'md';
  $('#swb').innerHTML=ACC.map((a,i)=>`<button class="sq${i===(S.acc||0)?' on':''}" data-ac="${i}" title="${a[0]}" style="background:${a[1]}"></button>`).join('');
- $('#sA').value=C.app;$('#sV').value=C.version;$('#sR').value=C.round;$('#sM').value=C.module;$('#sml').innerHTML=S.modules.map(m=>`<option value="${esc(m)}">`).join('');
+ $('#sA').value=C.app;$('#sV').value=C.version;fillRound('sR',C.round);$('#sM').value=C.module;$('#sml').innerHTML=S.modules.map(m=>`<option value="${esc(m)}">`).join('');
  $('#rIos').value=C.redmine.ios||'';$('#rAnd').value=C.redmine.android||'';$('#rWeb').value=C.redmine.web||'';
- const p=C.provider||'anthropic';$('#prov').value=p;$('#keyLbl').textContent=`${PLABEL[p]} API key`;$('#key').value=C.keys[p]||'';
- $('#key').placeholder={anthropic:'Paste sk-ant-... key',openai:'Paste sk-... key',gemini:'Paste AIza... key',custom:'Paste API key'}[p];
+ const p='gemini';$('#keyLbl').textContent=`${PLABEL[p]} API key`;$('#key').value=C.keys[p]||'';
+ $('#key').placeholder='Paste AIza... key';
  $('#modl').value=C.models[p]||'';$('#modl').placeholder=DEFMODEL[p]||'model name';
- $('#custEp').classList.toggle('hide',p!=='custom');$('#cep').value=C.customEndpoint||'';
 }
-$('#ss').onclick=()=>{const a=$('#sA').value.trim(),r=$('#sR').value.trim(),m=$('#sM').value.trim();if(!a||!r||!m)return toast('App name, round and module are required');Object.assign(C,{app:a,version:$('#sV').value.trim(),round:r,module:m});addMod(m);save();renderSet();renderCtx();renderModbox();renderDash();toast('Saved')};
+$('#ss').onclick=()=>{const a=$('#sA').value.trim(),r=roundVal('sR'),m=$('#sM').value.trim();if(!a||!r||!m)return toast('App name, round and module are required');Object.assign(C,{app:a,version:$('#sV').value.trim(),round:r,module:m});addMod(m);save();renderSet();renderCtx();renderModbox();renderDash();toast('Saved')};
 $('#rSave').onclick=()=>{C.redmine={ios:$('#rIos').value.trim(),android:$('#rAnd').value.trim(),web:$('#rWeb').value.trim()};save();renderPlat();toast('Redmine URLs saved')};
 $('#key').oninput=()=>{C.keys[C.provider]=$('#key').value.trim();save();updHow()};
 $('#rmKey').onclick=()=>{const p=C.provider;ask(`Remove the saved ${PLABEL[p]} API key from this device?`,()=>{C.keys[p]='';save();renderSet();updHow();toast(`${PLABEL[p]} key removed`)})};
 $('#modl').oninput=()=>{C.models[C.provider]=$('#modl').value.trim();save()};
-$('#cep').oninput=()=>{C.customEndpoint=$('#cep').value.trim();save()};
-$('#apiSave').onclick=()=>{const p=C.provider;C.keys[p]=$('#key').value.trim();C.models[p]=$('#modl').value.trim();C.customEndpoint=$('#cep').value.trim();S.limits[p]=null;save();updHow();const n=Object.values(C.keys).filter(k=>(k||'').trim()).length;toast(`API settings saved (${n} key${n===1?'':'s'})`)};
-$('#apiTest').onclick=async()=>{const p=C.provider,out=$('#apiTestOut');C.keys[p]=$('#key').value.trim();C.models[p]=$('#modl').value.trim();C.customEndpoint=$('#cep').value.trim();save();
+$('#apiSave').onclick=()=>{const p=C.provider;C.keys[p]=$('#key').value.trim();C.models[p]=$('#modl').value.trim();S.limits[p]=null;save();updHow();toast(C.keys[p]?'Gemini API settings saved':'Settings saved (no key added)')};
+$('#apiTest').onclick=async()=>{const p=C.provider,out=$('#apiTestOut');C.keys[p]=$('#key').value.trim();C.models[p]=$('#modl').value.trim();save();
  if(!C.keys[p]){out.innerHTML='<span style="color:var(--danger)">Add an API key first.</span>';return}
  out.textContent='Testing '+PLABEL[p]+'...';
  try{const r=await AI_FN[p]('1. Open app\n2. Tap on continue button\n3. The trust screen showing');out.innerHTML=`<span style="color:var(--good)">✔ ${PLABEL[p]} works.</span> Sample title: ${esc(r.title||'')}`}
- catch(e){out.innerHTML=`<span style="color:var(--danger)">✖ ${PLABEL[p]} failed (${esc(e.message)}): ${esc(e.detail||'network / CORS error - check key and connection')}</span>`}};
-$('#prov').onchange=()=>{C.provider=$('#prov').value;save();renderSet();updHow()};
+ catch(e){out.innerHTML=`<span style="color:var(--danger)">✖ ${PLABEL[p]} ${esc(errText(e))}${['500','503','504'].includes(String(e.message))?'':esc(e.detail?'':' (network / CORS error - check key and connection)')}</span>`}};
 
 /* ---------- generate ---------- */
 const fmtT=ms=>{const t=Math.max(1,Math.ceil(ms/1000)),m=Math.floor(t/60);return m?`${m}m ${t%60}s`:`${t}s`};
@@ -357,17 +365,6 @@ function offline(st){if(!st.length)return'';
  return trig?`${R} after ${trig}`:R}
 const SYS='You write bug titles for QA testers. From the repro steps write ONE clear title describing the PROBLEM in plain everyday English that a non-technical person understands: what wrongly happens, when it happens (the user action that triggers it) and where (which screen/feature). Ignore setup/config steps and technical terms. Max 20 words. Example steps: 1. set "flyer_skip_onboarding_question": 1, 2. Install and open through meta link 3. Now complete intro screen 4. The Continue button is showing there 5. Tap on the continue button 6. The trust screen showing. => Title: "The trust screen showing when tapping on continue button of the intro screen". Return ONLY JSON: {"title":"..."} with no app/module prefix.';
 const GSYS='Fix ONLY spelling and grammar in each repro step. Keep the meaning, wording, order and count exactly; do not add or remove steps; keep quoted keys and values unchanged. Return ONLY JSON: {"steps":["..."]}';
-async function aiAnthropic(steps,sys=SYS){const key=C.keys.anthropic,custom=(C.models.anthropic||'').trim();
- const list=[...new Set([custom||DEFMODEL.anthropic,DEFMODEL.anthropic,'claude-sonnet-4-6','claude-sonnet-4-5','claude-3-5-haiku-latest'])];let last;
- for(const model of list){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:600,system:sys,messages:[{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
-  if(r.ok){const d=await r.json();return pj(d.content.map(x=>x.text||'').join(''))}
-  try{await bad(r)}catch(e){last=e;if(String(e.message)==='404'||(String(e.message)==='400'&&/model/i.test(e.detail||'')))continue;throw e}
- }
- throw last}
-async function aiOpenAI(steps,sys=SYS){const key=C.keys.openai,model=C.models.openai||DEFMODEL.openai;
- const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
- if(!r.ok)await bad(r);const d=await r.json();return pj(d.choices?.[0]?.message?.content||'{}')}
 async function geminiCall(model,steps,sys){
  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(C.keys.gemini)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]}],generationConfig:{responseMimeType:'application/json'}})});
  if(!r.ok)await bad(r);
@@ -376,16 +373,6 @@ async function geminiModels(){
  try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${encodeURIComponent(C.keys.gemini)}`);if(!r.ok)return[];const d=await r.json();
   const score=n=>{const m=n.match(/gemini-(\d+(?:\.\d+)?)/);return (m?parseFloat(m[1])*10:0)-(/preview|exp/.test(n)?5:0)-(/lite/.test(n)?3:0)};
   return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,'')).filter(n=>/flash/.test(n)&&!/image|tts|live|audio|embed/.test(n)).sort((x,y)=>score(y)-score(x)).slice(0,3)}catch(e){return[]}}
-async function aiGemini(steps,sys=SYS){const saved=(C.models.gemini||'').trim();
- const first=[...new Set([saved||DEFMODEL.gemini,DEFMODEL.gemini])];let last;
- const ok=(m,r)=>{if(m!==saved){C.models.gemini=m;save()}return r};
- for(const m of first){try{return ok(m,await geminiCall(m,steps,sys))}catch(e){last=e;if(String(e.message)!=='404')throw e}}
- for(const m of (await geminiModels()).filter(m=>!first.includes(m))){try{return ok(m,await geminiCall(m,steps,sys))}catch(e){last=e;if(String(e.message)!=='404')throw e}}
- throw last}
-async function aiCustom(steps,sys=SYS){const key=C.keys.custom,model=C.models.custom,ep=C.customEndpoint;
- if(!ep)throw new Error('no-endpoint');
- const r=await fetch(ep,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({model,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]})});
- if(!r.ok)await bad(r);const d=await r.json();return pj(d.choices?.[0]?.message?.content||'{}')}
 const pj=t=>{t=String(t||'').replace(/```json|```/g,'').trim();const m=t.match(/\{[\s\S]*\}/);return JSON.parse(m?m[0]:t)};
 async function bad(r){let detail='';let sec=0,quota=false;
  try{const h=r.headers.get('retry-after');if(h)sec=+h||0;const t=await r.text();try{const j=JSON.parse(t),er=j.error||j;detail=(er&&er.message)||j.message||'';if(Array.isArray(j))detail=(j[0]&&j[0].error&&j[0].error.message)||''}catch(_){detail=t.slice(0,140)}
@@ -394,7 +381,21 @@ async function bad(r){let detail='';let sec=0,quota=false;
   m=t.match(/try again in (\d+(?:\.\d+)?)\s*(ms|s|m)\b/i);if(m){const v=+m[1];sec=Math.max(sec,m[2]==='ms'?v/1000:m[2]==='m'?v*60:v)}
  }catch(e){}
  const e=new Error(r.status);e.sec=Math.ceil(sec);e.quota=quota;e.detail=String(detail||'').slice(0,160);throw e}
-const AI_FN={anthropic:aiAnthropic,openai:aiOpenAI,gemini:aiGemini,custom:aiCustom};
+const errText=e=>String(e.message)==='503'||String(e.message)==='500'||String(e.message)==='504'?'is busy right now (high demand on Google\'s side). Please try again in a minute.':`failed (${e.message}${e.detail?': '+e.detail:''})`;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function aiGemini(steps,sys=SYS){const saved=(C.models.gemini||'').trim();
+ const queue=[...new Set([saved||DEFMODEL.gemini,DEFMODEL.gemini])],tried=new Set();let last,gone=false,more=false;
+ const ok=(m,r)=>{if(gone&&m!==saved){C.models.gemini=m;save()}return r};
+ while(queue.length){const m=queue.shift();if(tried.has(m))continue;tried.add(m);
+  for(let n=0;n<3;n++){
+   try{return ok(m,await geminiCall(m,steps,sys))}
+   catch(e){last=e;const st=String(e.message);
+    if(st==='503'||st==='500'||st==='504'){if(n<2){await wait(1500*(n+1));continue}break}
+    if(st==='404'){gone=true;break}
+    throw e}}
+  if(!queue.length&&!more){more=true;queue.push(...(await geminiModels()).filter(x=>!tried.has(x)))}}
+ throw last}
+const AI_FN={gemini:aiGemini};
 async function ai(steps,sys){const p=C.provider;
  for(let n=0;;n++){try{const r=await AI_FN[p](steps,sys);if(S.limits[p]){S.limits[p]=null;save();renderLimit()}return r}
   catch(e){if(String(e.message)==='429'){if(n<2&&(e.sec||0)<=5&&!e.quota){await new Promise(r=>setTimeout(r,1500*(n+1)));continue}
@@ -450,7 +451,7 @@ $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps
  try{
   if((C.keys[C.provider]||'').trim()){const r=await ai(txt);if(!r||!r.title)throw new Error('Empty AI reply');d=r.title}
   else d=offline(st0);
- }catch(e){toast(String(e.message)==='429'?'AI limit reached - made a simple title':'AI unavailable - made a simple title');$('#genErr').textContent=`${PLABEL[C.provider]} failed (${e.message}${e.detail?': '+e.detail:''}). A simple title was made from your steps instead.`;d=offline(st0)}
+ }catch(e){toast(String(e.message)==='429'?'AI limit reached - made a simple title':'AI unavailable - made a simple title');$('#genErr').textContent=`${PLABEL[C.provider]} ${errText(e)} A simple title was made from your steps instead.`;d=offline(st0)}
  $('#go').disabled=false;
  if(!priManuallySet){curPri=predictPriority(`${d} ${txt}`);renderPriBar()}
  const dev=$('#devIn').value.trim();
@@ -492,21 +493,30 @@ function renderDash(){
  $('#stApp').textContent=ctxOK()?`${C.app}${ver(C.version)}`:'–';
  $('#stMod').textContent=ctxOK()?C.module:'–';
  $('#stRound').textContent=ctxOK()?C.round:'–';
- const recent=S.items.slice(0,5);
- $('#recent').innerHTML=recent.length?recent.map(i=>`
-  <div class="list-row"><div><div class="t">${esc(i.title)}</div><div class="d">${new Date(i.date).toLocaleString()}</div></div>
-   <div class="badges">${i.priority?`<span class="pri" style="background:${priColor(i.priority)}">${esc(i.priority)}</span>`:''}${i.platform?`<span class="pill">${esc(PLATS[i.platform]||i.platform)}</span>`:''}<span class="pill">${esc(i.round)}</span></div></div>`).join(''):
-  '<div class="empty">No bug reports yet — generate your first one.</div>';
+ const mods=[...new Set([...S.modules,...S.items.map(i=>i.module)])].filter(Boolean);
+ const info=m=>{const L=S.items.filter(i=>i.module===m);return{m,n:L.length,t:L.reduce((x,i)=>Math.max(x,new Date(i.date).getTime()||0),0)}};
+ const rows=mods.map(info).sort((x,y)=>y.t-x.t||x.m.localeCompare(y.m));
+ $('#recent').innerHTML=rows.length?rows.map(r=>`
+  <div class="list-row" data-mod="${esc(r.m)}" style="cursor:pointer"><div><div class="t">${esc(r.m)}${ctxOK()&&C.module===r.m?' <span class="badge" style="margin-left:6px">Active</span>':''}</div><div class="d">${r.n?'Last bug: '+new Date(r.t).toLocaleString():'No bugs yet'}</div></div>
+   <div class="badges"><span class="pill">${r.n} bug${r.n===1?'':'s'}</span><span class="mu" style="font-size:18px">›</span></div></div>`).join(''):
+  '<div class="empty">No modules yet — set one up with "Tap to switch module".</div>';
 }
 
 /* ---------- history ---------- */
 function renderList(){const mods=[...new Set([...S.modules,...S.items.map(i=>i.module)])].sort();
- $('#list').innerHTML=mods.length?mods.map(m=>{const L=S.items.filter(i=>i.module===m);return `<div class="card"><div class="hi mod-hd"><b>${esc(m)} <span class="pill">${L.length}</span></b><span class="acts" style="margin:0"><button class="g" data-a="mren" data-m="${esc(m)}">Edit</button><button class="g" data-a="mdel" data-m="${esc(m)}">Delete</button></span></div>${L.map(i=>`<div class="it"><span style="flex:1;min-width:200px"><div>${esc(i.title)}</div><div class="d" style="font-size:11px;color:var(--mu)">${new Date(i.date).toLocaleString()}</div></span><span class="badges">${i.priority?`<span class="pri" style="background:${priColor(i.priority)}">${esc(i.priority)}</span>`:''}${i.platform?`<span class="pill">${esc(PLATS[i.platform]||i.platform)}</span>`:''}${i.live==='yes'?'<span class="pill" style="color:var(--danger);border-color:var(--danger)">Live</span>':''}${i.attachment?'<span class="pill">📎</span>':''}</span><span class="acts" style="margin:0"><button class="g" data-a="ed" data-id="${i.id}">Edit</button><button class="g" data-a="del" data-id="${i.id}">Delete</button></span></div>`).join('')||'<p class="mu" style="margin:8px 0 0">No issues yet.</p>'}</div>`}).join(''):'<div class="empty">No bug reports yet.</div>'}
+ $('#list').innerHTML=mods.length?mods.map(m=>{const L=S.items.filter(i=>i.module===m),col=!!S.collapsed[m];return `<div class="card" data-mod="${esc(m)}"><div class="hi mod-hd"><b data-a="tog" data-m="${esc(m)}" style="cursor:pointer;user-select:none;flex:1"><span style="display:inline-block;width:18px">${col?'▸':'▾'}</span>${esc(m)} <span class="pill">${L.length}</span></b><span class="acts" style="margin:0"><button class="g" data-a="mren" data-m="${esc(m)}">Edit</button><button class="g" data-a="mdel" data-m="${esc(m)}">Delete</button></span></div>${col?'':L.map(i=>`<div class="it"><span style="flex:1;min-width:200px"><div>${esc(i.title)}</div><div class="d" style="font-size:11px;color:var(--mu)">${new Date(i.date).toLocaleString()}</div></span><span class="badges">${i.priority?`<span class="pri" style="background:${priColor(i.priority)}">${esc(i.priority)}</span>`:''}${i.platform?`<span class="pill">${esc(PLATS[i.platform]||i.platform)}</span>`:''}${i.live==='yes'?'<span class="pill" style="color:var(--danger);border-color:var(--danger)">Live</span>':''}${i.attachment?'<span class="pill">📎</span>':''}</span><span class="acts" style="margin:0"><button class="g" data-a="ed" data-id="${i.id}">Edit</button><button class="g" data-a="del" data-id="${i.id}">Delete</button></span></div>`).join('')||'<p class="mu" style="margin:8px 0 0">No issues yet.</p>'}</div>`}).join(''):'<div class="empty">No bug reports yet.</div>'}
 $('#his').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,i=S.items.find(x=>x.id==b.dataset.id),m=b.dataset.m;
  if(a==='del')ask('Delete this issue?',()=>{S.items=S.items.filter(x=>x!==i);save();renderList();renderDash()});
  else if(a==='ed')modal('Edit issue',`<label>Title</label><input id="eT" value="${esc(i.title)}"><label>Body</label><textarea id="eB" style="min-height:240px">${esc(i.body)}</textarea>`,{onOk(){i.title=$('#eT').value.trim()||i.title;i.body=$('#eB').value;save();renderList();renderDash()}});
  else if(a==='mren')modal('Edit module name',`<label>Module name</label><input id="eM" value="${esc(m)}">`,{onOk(){if(renameMod(m,$('#eM').value)===false)return false;renderList()}});
- else if(a==='mdel')delMod(m)};
+ else if(a==='mdel')delMod(m);
+ else if(a==='tog'){S.collapsed[m]=!S.collapsed[m];save();renderList()}};
+function openModule(m){const all=[...new Set([...S.modules,...S.items.map(i=>i.module)])];all.forEach(x=>S.collapsed[x]=x!==m);save();showView('his');
+ const el=[...document.querySelectorAll('#list [data-mod]')].find(c=>c.dataset.mod===m);if(el)el.scrollIntoView({block:'start'})}
+$('#recent').onclick=e=>{const r=e.target.closest('[data-mod]');if(r)openModule(r.dataset.mod)};
+const histMods=()=>[...new Set([...S.modules,...S.items.map(i=>i.module)])];
+$('#expAll').onclick=()=>{S.collapsed={};save();renderList()};
+$('#colAll').onclick=()=>{histMods().forEach(m=>S.collapsed[m]=true);save();renderList()};
 function xlsEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function buildXls(items){
  const cols=['Module','Round','Platform','Priority','Live issue','Orientation','Device & OS','Attachment','Date','Title','Body'];
