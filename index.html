@@ -110,6 +110,7 @@ textarea{min-height:120px;resize:vertical}
  <div class="side-lbl">Active module</div>
  <div class="modbox" id="modbox"></div>
  <label class="sw" style="margin-top:2px"><input type="checkbox" id="dk"> Dark mode</label>
+ <div class="mu" style="font-size:11px;opacity:.65;padding:0 2px">Build 01-Oct-2026 · simple-title v7</div>
 </aside>
 <main>
 
@@ -164,7 +165,7 @@ textarea{min-height:120px;resize:vertical}
  </div>
  <div id="out" class="card hide">
   <div id="tagRow" class="acts" style="margin:0 0 12px"></div>
-  <div class="hi"><label style="margin:0">Title</label><button class="g" id="cT">Copy</button></div><input id="oT">
+  <div class="hi"><label style="margin:0">Title</label><span class="acts" style="margin:0"><button class="g acc" id="aiBtn">✨ Improve with AI</button><button class="g" id="cT">Copy</button></span></div><input id="oT">
   <div class="hi" style="margin-top:10px"><label style="margin:0">Issue body</label><button class="g" id="cB">Copy</button></div><textarea id="oB"></textarea>
   <div class="acts">
    <button class="b" id="sv">Update history</button>
@@ -200,10 +201,12 @@ textarea{min-height:120px;resize:vertical}
   <div id="apiStat" class="acts" style="margin:10px 0 0"></div>
   <label id="keyLbl">API key</label><div class="hi" style="gap:8px"><input id="key" type="password" autocomplete="off" placeholder="Paste key to turn on AI titles" style="flex:1"><button class="g" id="rmKey">Remove</button></div>
   <label id="modLbl">Model</label><input id="modl" placeholder="model name">
+  <label>When should AI be used?</label><select id="aiMode"><option value="smart">Smart - only when simple rules are unsure (saves the most)</option><option value="manual">Manual - only when I press "Improve with AI"</option><option value="always">Every time I generate</option></select>
+  <div id="aiUsage" class="hint" style="margin-top:6px"></div>
   <div class="hint" style="margin-top:6px">Add your Gemini API key to get AI-written titles. Without a key, a simple title is made from your steps. Saved on this device only.</div>
   <div class="acts"><button class="b" id="apiSave">Save API settings</button><button class="g" id="apiTest">Test key</button></div>
   <div id="apiTestOut" class="hint" style="margin-top:8px"></div>
-  <div class="hint" style="margin-top:12px;opacity:.7">BugDesk build 30-Sep-2026 · Gemini auto-model fix (default gemini-3.8-flash)</div>
+  <div class="hint" style="margin-top:12px;opacity:.7">BugDesk build 01-Oct-2026 · simple-title v7</div>
  </div>
 </section>
 
@@ -311,7 +314,7 @@ $('#bm').onchange=e=>{S.bold=e.target.value;save();toast('Saved')};
 
 /* ---------- settings ---------- */
 function renderSet(){
- $('#bm').value=S.bold||'md';
+ $('#bm').value=S.bold||'md';$('#aiMode').value=S.aiMode||'smart';renderUse();
  $('#swb').innerHTML=ACC.map((a,i)=>`<button class="sq${i===(S.acc||0)?' on':''}" data-ac="${i}" title="${a[0]}" style="background:${a[1]}"></button>`).join('');
  $('#sA').value=C.app;$('#sV').value=C.version;fillRound('sR',C.round);$('#sM').value=C.module;$('#sml').innerHTML=S.modules.map(m=>`<option value="${esc(m)}">`).join('');
  $('#rIos').value=C.redmine.ios||'';$('#rAnd').value=C.redmine.android||'';$('#rWeb').value=C.redmine.web||'';
@@ -324,6 +327,7 @@ $('#rSave').onclick=()=>{C.redmine={ios:$('#rIos').value.trim(),android:$('#rAnd
 $('#key').oninput=()=>{C.keys[C.provider]=$('#key').value.trim();save();updHow()};
 $('#rmKey').onclick=()=>{const p=C.provider;ask(`Remove the saved ${PLABEL[p]} API key from this device?`,()=>{C.keys[p]='';save();renderSet();updHow();toast(`${PLABEL[p]} key removed`)})};
 $('#modl').oninput=()=>{C.models[C.provider]=$('#modl').value.trim();save()};
+$('#aiMode').onchange=e=>{S.aiMode=e.target.value;save();toast('Saved')};
 $('#apiSave').onclick=()=>{const p=C.provider;C.keys[p]=$('#key').value.trim();C.models[p]=$('#modl').value.trim();S.limits[p]=null;save();updHow();toast(C.keys[p]?'Gemini API settings saved':'Settings saved (no key added)')};
 $('#apiTest').onclick=async()=>{const p=C.provider,out=$('#apiTestOut');C.keys[p]=$('#key').value.trim();C.models[p]=$('#modl').value.trim();save();
  if(!C.keys[p]){out.innerHTML='<span style="color:var(--danger)">Add an API key first.</span>';return}
@@ -344,7 +348,7 @@ function renderLimit(){
  $('#how').innerHTML=has?`<span class="dot" style="background:${x.c}"></span> AI title (${PLABEL[p]}) · ${x.t}`:'<span class="dot" style="background:#a1a1aa"></span> Simple title mode · no API key';
  $('#how').title=has?'AI writes the title. If it is unavailable, a simple title is made from your steps instead.':'Generate still works: a simple title is made from your steps. Add an API key in Settings for AI-written titles.'}
 const updHow=()=>renderLimit();
-setInterval(renderLimit,1000);
+setInterval(()=>{renderLimit();renderUse()},1000);
 const PLAIN=[[/\bapp\s+crash(es|ed|ing)?\b/gi,'app closes suddenly'],[/\bcrash(es|ed|ing)?\b/gi,'closes suddenly'],[/\banr\b/gi,'app freezes'],[/\bnull\b/gi,'missing'],[/\bui\b/gi,'screen'],[/\blag(s|ging)?\b/gi,'runs slowly'],[/\bcta\b/gi,'button']];
 const plain=s=>PLAIN.reduce((t,[r,v])=>t.replace(r,v),s||'').trim();
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
@@ -354,18 +358,46 @@ const ACTV=Object.keys(GER).join('|'),STOP=new RegExp('^('+ACTV+'|the|a|an|on|in
 const CTX=/\b((?:[A-Za-z0-9]+\s+){0,2}?[A-Za-z0-9]+)\s+(screen|page|dialog|popup|pop-up|tab)\b/i;
 function offline(st){if(!st.length)return'';
  const strip=x=>x.replace(/^(now|then|after that|again|observe that|notice that)[\s,]+/i,'').replace(/[.,;!]+$/,'').trim();
- const S2=st.map(strip).filter(Boolean);if(!S2.length)return'';
+ const S2=st.flatMap(x=>x.split(/\s*(?:>>|»)\s*/)).map(strip).filter(Boolean);if(!S2.length)return'';
  const L=S2.length-1,isAct=x=>new RegExp('^('+ACTV+')\\b','i').test(x),hasR=!isAct(S2[L]);
  let ti=-1;for(let i=hasR?L-1:L;i>=0;i--)if(isAct(S2[i])){ti=i;break}
  let trig='';
- if(ti>=0){const w=S2[ti].split(/\s+/),v=GER[w[0].toLowerCase()];
-  if(v)trig=[v,...w.slice(1)].join(' ').replace(/\b(the|a|an|on|to|through)\s+/gi,'').split(/\s+/).slice(0,6).join(' ')}
+ if(ti>=0){const mm=S2[ti].match(/^(?:tap|click|press|open|select)\s+(?:on\s+)?(?:the\s+)?(.+?)\s+and\s+(?:choose|select|pick)\s+(.+?)(?:\s+(?:from|in|of)\s+(?:the\s+)?(?:list|menu))?$/i);
+  if(mm)trig=`${/^(tap|click|press)\b/i.test(S2[ti])?'tapping':'selecting'} ${mm[2]} from ${mm[1]}`.replace(/\s+/g,' ').split(/\s+/).slice(0,8).join(' ');
+  else{const first=S2[ti].split(/\s+(?:and|then|&)\s+|,\s*/i)[0],w=first.split(/\s+/),v=GER[w[0].toLowerCase()];
+   if(v)trig=[v,...w.slice(1)].join(' ').replace(/\b(the|a|an|on|to|through)\s+/gi,'').split(/\s+/).slice(0,8).join(' ')}
+  trig=trig.replace(/\boption\b/gi,'button');
+  if(trig&&/\b(button|icon|toggle|link|banner|cta|card)\b/i.test(trig))
+   for(let i=ti-1;i>=Math.max(0,ti-3);i--){const m=S2[i].match(CTX);if(m){const c=m[1].split(/\s+/).filter(x=>!STOP.test(x)).join(' ').toLowerCase();if(c&&!trig.toLowerCase().includes(c))trig+=` on ${c} ${m[2].toLowerCase()}`;break}}}
  if(!hasR)return trig?`Problem after ${trig}`:cap(S2[L]);
- const R=cap(plain(S2[L]).replace(/^(the|a|an)\s+/i,'').replace(/\s(is|are)\s+(\w+ing)\b/i,' $2').replace(/\s+(there|here)$/i,'').trim());
+ let R=plain(S2[L]),fromCheck=false;
+ const parts=R.split(/\b(?:check|verify|observe|notice|confirm)\b\s*/i);
+ if(parts.length>1){const t=parts[parts.length-1].trim();if(t){R=t;fromCheck=true}}
+ R=R.replace(/^(the|a|an)\s+/i,'');
+ const neg=R.match(/^(.+?)\s+(?:is|are)\s+not\s+(?:shown|displayed|visible|showing|appearing)\b\s*(.*)$/i);
+ const sh=!neg&&fromCheck&&!/\bshould\b/i.test(R)&&R.match(/^(.+?)\s+(?:is|are)\s+(?:shown|displayed|visible|showing|appearing)\b\s*(.*)$/i);
+ if(neg){const rest=neg[2].replace(/\s+(?:happens|occurs)$/i,'').trim();R=`${neg[1]} should be shown${rest?' '+rest:''}`}
+ else if(sh){const rest=sh[2].replace(/\s+of\s+(?:[\w-]+\s+){0,3}?(?:happens|occurs)$/i,'').replace(/\s+(?:happens|occurs)$/i,'').trim();
+  R=`${sh[1]} should not be shown${rest?(/^(above|below|bottom|top|under|over)\b/i.test(rest)?' at ':' ')+rest:''}`}
+ else R=R.replace(/\s(is|are)\s+(?=\w+(?:ed|ing|own|een|den)\b)/i,' ').replace(/\b(?:is|are)\s+(looks|seems|appears)\b/gi,'$1');
+ R=cap(R.replace(/\s+(there|here)$/i,'').trim().split(/\s+/).slice(0,18).join(' '));
  return trig?`${R} after ${trig}`:R}
-const SYS='You write bug titles for QA testers. From the repro steps write ONE clear title describing the PROBLEM in plain everyday English that a non-technical person understands: what wrongly happens, when it happens (the user action that triggers it) and where (which screen/feature). Ignore setup/config steps and technical terms. Max 20 words. Example steps: 1. set "flyer_skip_onboarding_question": 1, 2. Install and open through meta link 3. Now complete intro screen 4. The Continue button is showing there 5. Tap on the continue button 6. The trust screen showing. => Title: "The trust screen showing when tapping on continue button of the intro screen". Return ONLY JSON: {"title":"..."} with no app/module prefix.';
+const SYS=`You write bug titles for QA testers. Follow ONE title rule:
+1. One sentence, plain everyday English a non-technical person understands. Sentence case, no trailing period, max 20 words. Never start with "Check" or "Verify". No app, module or round name.
+2. Display problems use expected-behaviour wording: "<thing> should (not) be shown <where/when>".
+3. Other problems state what wrongly happens in plain words, then WHERE (screen/feature) and WHEN (the user action) using "after", "while" or "when": "<problem> after <action>".
+4. Ignore setup/config steps and technical terms. Name the real UI element (button, dialog, screen) from the steps.
+Examples:
+- Pre-text should be shown at proper place on chatboard screen
+- Keyboard should not be shown again while closing 'Update Guest details' dialog
+- Shadow should not be shown at above or bottom sides of card while animation after tapping Back side or Front side button on preview screen
+- Feedback dialog is not closed after swiping Right Left side
+- Chat screen automatically scrolls to the image section while regenerating a logo or flyer
+- Free user should not be able to copy event, as its pro feature
+- The trust screen showing when tapping on continue button of the intro screen
+Return ONLY JSON: {"title":"..."}`;
 const GSYS='Fix ONLY spelling and grammar in each repro step. Keep the meaning, wording, order and count exactly; do not add or remove steps; keep quoted keys and values unchanged. Return ONLY JSON: {"steps":["..."]}';
-async function geminiCall(model,steps,sys){
+async function geminiCall(model,steps,sys){bumpUse();
  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(C.keys.gemini)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:`Module: ${C.module}\nSteps:\n${steps||'(none)'}`}]}],generationConfig:{responseMimeType:'application/json'}})});
  if(!r.ok)await bad(r);
  const d=await r.json();const t=(d.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('');return pj(t)}
@@ -381,24 +413,24 @@ async function bad(r){let detail='';let sec=0,quota=false;
   m=t.match(/try again in (\d+(?:\.\d+)?)\s*(ms|s|m)\b/i);if(m){const v=+m[1];sec=Math.max(sec,m[2]==='ms'?v/1000:m[2]==='m'?v*60:v)}
  }catch(e){}
  const e=new Error(r.status);e.sec=Math.ceil(sec);e.quota=quota;e.detail=String(detail||'').slice(0,160);throw e}
-const errText=e=>String(e.message)==='503'||String(e.message)==='500'||String(e.message)==='504'?'is busy right now (high demand on Google\'s side). Please try again in a minute.':`failed (${e.message}${e.detail?': '+e.detail:''})`;
+const errText=e=>String(e.message)==='paused'?'is paused because its limit was reached (it resumes automatically).':String(e.message)==='503'||String(e.message)==='500'||String(e.message)==='504'?'is busy right now (high demand on Google\'s side). Please try again in a minute.':`failed (${e.message}${e.detail?': '+e.detail:''})`;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function aiGemini(steps,sys=SYS){const saved=(C.models.gemini||'').trim();
  const queue=[...new Set([saved||DEFMODEL.gemini,DEFMODEL.gemini])],tried=new Set();let last,gone=false,more=false;
  const ok=(m,r)=>{if(gone&&m!==saved){C.models.gemini=m;save()}return r};
  while(queue.length){const m=queue.shift();if(tried.has(m))continue;tried.add(m);
-  for(let n=0;n<3;n++){
+  for(let n=0;n<2;n++){
    try{return ok(m,await geminiCall(m,steps,sys))}
    catch(e){last=e;const st=String(e.message);
-    if(st==='503'||st==='500'||st==='504'){if(n<2){await wait(1500*(n+1));continue}break}
+    if(st==='503'||st==='500'||st==='504'){if(n<1){await wait(2000);continue}break}
     if(st==='404'){gone=true;break}
     throw e}}
-  if(!queue.length&&!more){more=true;queue.push(...(await geminiModels()).filter(x=>!tried.has(x)))}}
+  if(!queue.length&&!more&&gone){more=true;queue.push(...(await geminiModels()).filter(x=>!tried.has(x)))}}
  throw last}
 const AI_FN={gemini:aiGemini};
 async function ai(steps,sys){const p=C.provider;
  for(let n=0;;n++){try{const r=await AI_FN[p](steps,sys);if(S.limits[p]){S.limits[p]=null;save();renderLimit()}return r}
-  catch(e){if(String(e.message)==='429'){if(n<2&&(e.sec||0)<=5&&!e.quota){await new Promise(r=>setTimeout(r,1500*(n+1)));continue}
+  catch(e){if(String(e.message)==='429'){if(n<1&&(e.sec||0)<=5&&!e.quota){await new Promise(r=>setTimeout(r,1500*(n+1)));continue}
     S.limits[p]={until:Date.now()+(e.sec||60)*1000,quota:!!e.quota};save();renderLimit()}
    throw e}}}
 
@@ -445,17 +477,32 @@ function applyPreset(){liveVal='no';repVal='yes';oriVal='Portrait';setSeg('liveS
 const parse2=parse;
 let CUR=null;
 $('#steps').oninput=()=>{priManuallySet=false};
+const ruleSure=t=>/\bafter\b/.test(t)&&!/^Problem after/.test(t);
+const mkTail=(d,dev,live)=>{const clean=String(d||'').replace(/^\s*(check|verify)\s+/i,'').replace(/\s+/g,' ').replace(/[.\s]+$/,'');return `${cap(clean)}${dev?` (${dev})`:''}${live==='yes'?' (LIVE)':''}`};
+const mkTitle=(d,dev,live)=>`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${mkTail(d,dev,live)}`;
+const todayKey=()=>new Date().toLocaleDateString('en-CA');
+function bumpUse(){const t=todayKey();if(!S.usage||S.usage.d!==t)S.usage={d:t,n:0};S.usage.n++;save()}
+function renderUse(){const u=$('#aiUsage');if(u){const n=S.usage&&S.usage.d===todayKey()?S.usage.n:0;u.textContent=`AI calls today on this device: ${n}`}}
+async function aiTitle(txt){
+ if(limState(C.provider).c==='#ef4444')throw new Error('paused');
+ const lines=txt.split(/\n/).map(x=>x.trim()).filter(Boolean).slice(-8).join('\n');
+ const key=C.module+'|'+lines.toLowerCase();S.tcache=S.tcache||{};
+ if(S.tcache[key])return S.tcache[key];
+ const r=await ai(lines);if(!r||!r.title)throw new Error('Empty AI reply');
+ const ks=Object.keys(S.tcache);if(ks.length>=60)delete S.tcache[ks[0]];
+ S.tcache[key]=r.title;save();return r.title}
 $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps').value.trim();
  if(!txt)return toast('Add some steps');
  const st0=parse2(txt);let st=st0.map(fixStep),d;$('#go').disabled=true;$('#genErr').textContent='';
- try{
-  if((C.keys[C.provider]||'').trim()){const r=await ai(txt);if(!r||!r.title)throw new Error('Empty AI reply');d=r.title}
-  else d=offline(st0);
- }catch(e){toast(String(e.message)==='429'?'AI limit reached - made a simple title':'AI unavailable - made a simple title');$('#genErr').textContent=`${PLABEL[C.provider]} ${errText(e)} A simple title was made from your steps instead.`;d=offline(st0)}
+ d=offline(st0);
+ {const mode=S.aiMode||'smart',hasKey=(C.keys[C.provider]||'').trim();
+  if(hasKey&&(mode==='always'||(mode==='smart'&&!ruleSure(d)))){
+   try{d=await aiTitle(txt)}
+   catch(e){toast(String(e.message)==='429'||String(e.message)==='paused'?'AI limit reached - made a simple title':'AI unavailable - made a simple title');$('#genErr').textContent=`${PLABEL[C.provider]} ${errText(e)} A simple title was made from your steps instead.`;d=offline(st0)}}}
  $('#go').disabled=false;
  if(!priManuallySet){curPri=predictPriority(`${d} ${txt}`);renderPriBar()}
  const dev=$('#devIn').value.trim();
- const title=`${C.app}${ver(C.version)} (${C.module}) (${C.round}) : ${cap(d||'')}${dev?` (${dev})`:''}`;
+ const title=mkTitle(d,dev,liveVal);
 
  let qaSection=`${bold('QA Suggestion:')}`;
  const qaCustom=$('#qaInput').value.trim();
@@ -468,13 +515,18 @@ $('#go').onclick=async()=>{if(!ctxOK())return ctxModal(true);const txt=$('#steps
  if(dev)qaSection+=`\n${bold('Device & OS details:')} => ${dev}`;
 
  const body=`${bold(HEAD)}\n${st.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n${qaSection}`;
- CUR={module:C.module,round:C.round,platform:S.platform,priority:curPri,live:liveVal,attachment:attUrl,orientation:oriVal,device:dev};
+ CUR={module:C.module,round:C.round,platform:S.platform,priority:curPri,live:liveVal,attachment:attUrl,orientation:oriVal,device:dev,txt};
  $('#oT').value=title;$('#oB').value=body;$('#out').classList.remove('hide');renderPlat();
  $('#tagRow').innerHTML=`<span style="font-size:18px">🏷️</span><span class="pri" style="background:${priColor(curPri)}">${esc(curPri)}</span><span class="pill">${esc(PLATS[S.platform])}</span><span class="pill">${esc(C.module)}</span><span class="pill">${esc(C.round)}</span>`;
  // auto-save to history
  const it={id:Date.now(),date:new Date().toISOString(),module:CUR.module,round:CUR.round,platform:CUR.platform,priority:CUR.priority,live:CUR.live,attachment:CUR.attachment,orientation:CUR.orientation,device:CUR.device,status:'Open',title,body};
  S.items.unshift(it);addMod(CUR.module);CUR.id=it.id;save();renderDash();
  $('#out').scrollIntoView({behavior:'smooth',block:'nearest'})};
+$('#aiBtn').onclick=async()=>{if(!CUR||!CUR.txt)return;if(!(C.keys[C.provider]||'').trim())return toast('Add your Gemini key in Settings first');
+ $('#aiBtn').disabled=true;$('#genErr').textContent='';
+ try{const d=await aiTitle(CUR.txt),cur=$('#oT').value,i=cur.indexOf(' : ');$('#oT').value=(i>=0?cur.slice(0,i):cur)+' : '+mkTail(d,CUR.device,CUR.live);syncCur();toast('Title improved with AI')}
+ catch(e){$('#genErr').textContent=`${PLABEL[C.provider]} ${errText(e)}`;toast('AI unavailable')}
+ $('#aiBtn').disabled=false};
 $('#cT').onclick=()=>copy($('#oT').value);$('#cB').onclick=()=>copy($('#oB').value);
 const syncCur=()=>{const it=CUR&&S.items.find(x=>x.id===CUR.id);if(it){it.title=$('#oT').value;it.body=$('#oB').value;save();renderDash()}};
 $('#oT').oninput=syncCur;$('#oB').oninput=syncCur;
